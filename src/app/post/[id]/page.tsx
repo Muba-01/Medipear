@@ -4,6 +4,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import PostCard from "@/components/posts/PostCard";
 import CommentForm from "@/components/posts/CommentForm";
 import ThreadedComments from "@/components/posts/ThreadedComments";
+import InfoTooltip from "@/components/common/InfoTooltip";
 import { getPostById } from "@/services/postService";
 import { getCommentsByPost } from "@/services/commentService";
 import { MessageSquare, ExternalLink } from "lucide-react";
@@ -64,8 +65,9 @@ export default async function PostPage({ params }: PageProps) {
           <div
             className="rounded-xl border p-5"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-            <p className="text-sm mb-3" style={{ color: "var(--muted)" }}>
-              Trust Score: {(post.trustScore * 100).toFixed(0)}
+            <p className="text-sm mb-3 flex items-center gap-2" style={{ color: "var(--muted)" }}>
+              Trust Score: {(post.trustScore * 100).toFixed(0)}/100
+              <InfoTooltip   text={"Trust Score shows how reliable a medical post may be.\nIt combines machine learning analysis with checks for references, PubMed links, and citation recency."} />
             </p>
             <h2 className="text-base font-semibold mb-3" style={{ color: "var(--foreground)" }}>
               {post.title}
