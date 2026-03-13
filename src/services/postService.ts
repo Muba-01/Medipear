@@ -335,6 +335,30 @@ export async function updatePost(
 
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
+  // Fetch the original post to check if content changed
+  const originalPost = await Post.findOne({
+    _id: postId,
+    author: userObjectId,
+  }).lean();
+
+  if (!originalPost) {
+    // Either the post doesn't exist or the user is not the owner
+    throw new Error("Unauthorized: You can only edit your own posts");
+  }
+
+  // Determine if content or title changed
+  const contentChanged = originalPost.content !== updates.content || originalPost.title !== updates.title;
+  
+  // Recalculate trustScore if content changed
+  let trustScoreUpdate = {};
+  if (contentChanged) {
+    const textToScore = updates.content || updates.title;
+    console.log("[DEBUG] updatePost - content changed, recalculating trustScore for text:", textToScore);
+    const newTrustScore = await getTrustScore(textToScore);
+    console.log("[DEBUG] updatePost - new trustScore calculated:", newTrustScore);
+    trustScoreUpdate = { trustScore: newTrustScore };
+  }
+
   // Update only the post owned by this user
   const result = await Post.findOneAndUpdate(
     {
@@ -343,6 +367,7 @@ export async function updatePost(
     },
     {
       ...updates,
+      ...trustScoreUpdate,
       updatedAt: new Date(),
     },
     {

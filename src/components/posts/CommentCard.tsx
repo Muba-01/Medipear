@@ -59,6 +59,7 @@ export default function CommentCard({ comment, depth = 0, hasReplies = false, co
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ voteType: direction }),
+        credentials: "include",
       });
       if (!res.ok) throw new Error("vote failed");
       const data = await res.json();
@@ -80,6 +81,7 @@ export default function CommentCard({ comment, depth = 0, hasReplies = false, co
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: replyText.trim(), parentCommentId: comment.id }),
+        credentials: "include",
       });
       if (!res.ok) throw new Error("reply failed");
       setReplyOpen(false);
@@ -96,15 +98,26 @@ export default function CommentCard({ comment, depth = 0, hasReplies = false, co
     if (!editText.trim()) return;
     setEditLoading(true);
     try {
+      console.log("[DEBUG] handleEditSubmit - sending PUT request to /api/comments/" + comment.id);
       const res = await fetch(`/api/comments/${comment.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: editText.trim() }),
+        credentials: "include",
       });
-      if (!res.ok) throw new Error("edit failed");
+      console.log("[DEBUG] handleEditSubmit - response status:", res.status);
+      
+      if (!res.ok) {
+        const error = await res.json();
+        console.error("[DEBUG] handleEditSubmit - error response:", error);
+        throw new Error(error.error || "Failed to update comment");
+      }
+      
+      console.log("[DEBUG] handleEditSubmit - success");
       setEditOpen(false);
       router.refresh();
-    } catch {
+    } catch (error) {
+      console.error("[DEBUG] handleEditSubmit - catch error:", error);
       // keep edit open on failure
     } finally {
       setEditLoading(false);
@@ -114,13 +127,24 @@ export default function CommentCard({ comment, depth = 0, hasReplies = false, co
   const handleDelete = async () => {
     setDeleteLoading(true);
     try {
+      console.log("[DEBUG] handleDelete - sending DELETE request to /api/comments/" + comment.id);
       const res = await fetch(`/api/comments/${comment.id}`, {
         method: "DELETE",
+        credentials: "include",
       });
-      if (!res.ok) throw new Error("delete failed");
+      console.log("[DEBUG] handleDelete - response status:", res.status);
+      
+      if (!res.ok) {
+        const error = await res.json();
+        console.error("[DEBUG] handleDelete - error response:", error);
+        throw new Error(error.error || "Failed to delete comment");
+      }
+      
+      console.log("[DEBUG] handleDelete - success");
       setDeleteConfirm(false);
       router.refresh();
-    } catch {
+    } catch (error) {
+      console.error("[DEBUG] handleDelete - catch error:", error);
       // keep confirm open on failure
     } finally {
       setDeleteLoading(false);
