@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateNonce } from "@/lib/nonce";
+import { randomBytes } from "crypto";
+
+const NONCE_COOKIE = "mp_nonce";
+const NONCE_TTL_SECONDS = 5 * 60;
 
 export async function GET(req: NextRequest) {
   const address = req.nextUrl.searchParams.get("address");
@@ -8,10 +11,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
   }
 
-  const nonce = generateNonce(address);
+  const normalizedAddress = address.toLowerCase();
+  const nonce = randomBytes(32).toString("hex");
+  const challenge = {
+    address: normalizedAddress,
+    nonce,
+    exp: Date.now() + NONCE_TTL_SECONDS * 1000,
+  };
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     nonce,
     message: `Sign this message to authenticate with Medipear.\n\nNonce: ${nonce}`,
   });
+
+  res.cookies.set(NONCE_COOKIE, Buffer.from(JSON.stringify(challenge)).toString("base64url"), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: NONCE_TTL_SECONDS,
+    path: "/",
+  });
+
+  return res;
 }

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyMessage } from "ethers";
-import { consumeNonce } from "@/lib/nonce";
 import { signJWT } from "@/lib/jwt";
 import { findOrCreateUserByWallet } from "@/services/userService";
 
 const COOKIE_NAME = "mp_token";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const NONCE_COOKIE = "mp_nonce";
 
 export async function POST(req: NextRequest) {
   let body: { address?: string; signature?: string };
@@ -26,8 +26,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
-  const nonce = consumeNonce(address);
-  if (!nonce) {
+  const nonceCookie = req.cookies.get(NONCE_COOKIE)?.value;
+  if (!nonceCookie) {
+    return NextResponse.json({ error: "Nonce expired or not found. Please try again." }, { status: 401 });
+  }
+
+  let nonce = "";
+  try {
+    const decoded = JSON.parse(Buffer.from(nonceCookie, "base64url").toString("utf8")) as {
+      address?: string;
+      nonce?: string;
+      exp?: number;
+    };
+
+    if (
+      decoded.address?.toLowerCase() !== address.toLowerCase() ||
+      !decoded.nonce ||
+      typeof decoded.exp !== "number" ||
+      Date.now() > decoded.exp
+    ) {
+      throw new Error("Invalid nonce challenge");
+    }
+
+    nonce = decoded.nonce;
+  } catch {
     return NextResponse.json({ error: "Nonce expired or not found. Please try again." }, { status: 401 });
   }
 
@@ -60,6 +82,14 @@ export async function POST(req: NextRequest) {
     walletAddress: address.toLowerCase(),
     username: dbUser?.username ?? null,
     userId: dbUser?._id?.toString() ?? null,
+  });
+
+  res.cookies.set(NONCE_COOKIE, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
   });
 
   res.cookies.set(COOKIE_NAME, token, {
