@@ -64,5 +64,6 @@ export interface Comment {
   score: number;
   parentComment: string | null;
   createdAt: string;
+  editedAt: string | null;
   userVote?: "up" | "down" | null;
 }

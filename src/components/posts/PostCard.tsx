@@ -187,10 +187,10 @@ export default function PostCard({ post, compact = false, onPostDeleted }: PostC
           {/* Meta */}
           <div className="flex items-center gap-2 flex-wrap mb-2">
             <Link
-              href={`/r/${post.community.slug}`}
+              href={`/p/${post.community.slug}`}
               className="text-xs font-semibold hover:text-purple-400 transition-colors"
               style={{ color: "var(--foreground)" }}>
-              r/{post.community.slug}
+              🍐/{post.community.slug}
             </Link>
             <span style={{ color: "var(--border)" }}>·</span>
             <span className="text-xs" style={{ color: "var(--muted)" }}>

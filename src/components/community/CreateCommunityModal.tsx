@@ -84,7 +84,7 @@ export default function CreateCommunityModal({ isOpen, onClose }: Props) {
 
       setDone(true);
       router.refresh();
-      router.push(`/r/${slug}`);
+      router.push(`/p/${slug}`);
       setTimeout(onClose, 800);
     } catch {
       setError("Network error. Please try again.");
@@ -132,7 +132,7 @@ export default function CreateCommunityModal({ isOpen, onClose }: Props) {
                 Community created!
               </h3>
               <p className="text-sm" style={{ color: "var(--muted)" }}>
-                Redirecting to r/{slug}...
+                Redirecting to 🍐/{slug}...
               </p>
             </div>
           ) : (
@@ -162,7 +162,7 @@ export default function CreateCommunityModal({ isOpen, onClose }: Props) {
                 />
                 {name.trim().length >= 3 && slug.length >= 3 && (
                   <p className="mt-1 text-xs" style={{ color: "#34d399" }}>
-                    URL: <span style={{ color: "#a78bfa" }}>r/{slug}</span>
+                    URL: <span style={{ color: "#a78bfa" }}>🍐/{slug}</span>
                   </p>
                 )}
               </div>

@@ -52,7 +52,7 @@ export default async function Sidebar() {
             {communities.slice(0, 8).map((c) => (
               <Link
                 key={c._id.toString()}
-                href={`/r/${c.slug}`}
+                href={`/p/${c.slug}`}
                 className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors"
                 style={{ borderBottom: "1px solid var(--border)" }}>
                 <div
@@ -62,7 +62,7 @@ export default async function Sidebar() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: "var(--foreground)" }}>
-                    r/{c.slug}
+                    🍐/{c.slug}
                   </p>
                   <p className="text-xs" style={{ color: "var(--muted)" }}>
                     {c.membersCount.toLocaleString()} members

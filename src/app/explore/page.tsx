@@ -40,7 +40,7 @@ export default async function ExplorePage() {
           {communities.map((c) => (
             <Link
               key={c._id.toString()}
-              href={`/r/${c.slug}`}
+              href={`/p/${c.slug}`}
               className="flex items-center gap-4 p-4 rounded-xl border hover:border-purple-500/40 transition-all"
               style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               <div
@@ -50,7 +50,7 @@ export default async function ExplorePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate" style={{ color: "var(--foreground)" }}>
-                  r/{c.slug}
+                  🍐/{c.slug}
                 </p>
                 {c.description && (
                   <p className="text-xs line-clamp-1 mt-0.5" style={{ color: "var(--muted)" }}>

@@ -19,6 +19,7 @@ export interface CommentData {
   score: number;
   parentComment: string | null;
   createdAt: string;
+  editedAt: string | null;
 }
 
 type PopulatedComment = IComment & {
@@ -48,6 +49,7 @@ function serializeComment(c: PopulatedComment): CommentData {
     score:         c.score,
     parentComment: c.parentComment?.toString() ?? null,
     createdAt:     c.createdAt.toISOString(),
+    editedAt:      c.editedAt?.toISOString() ?? null,
   };
 }
 
@@ -96,6 +98,34 @@ export async function createComment(
   );
 
   return serializeComment(populated as unknown as PopulatedComment);
+}
+
+export async function updateComment(commentId: string, content: string): Promise<CommentData> {
+  await connectDB();
+
+  const comment = await Comment.findByIdAndUpdate(
+    commentId,
+    { content: content.trim(), editedAt: new Date() },
+    { new: true }
+  ).populate("author", "username walletAddress avatarUrl karma");
+
+  if (!comment) throw new Error("Comment not found");
+
+  return serializeComment(comment as PopulatedComment);
+}
+
+export async function deleteComment(commentId: string): Promise<CommentData> {
+  await connectDB();
+
+  const comment = await Comment.findByIdAndUpdate(
+    commentId,
+    { content: "Comment deleted by original user." },
+    { new: true }
+  ).populate("author", "username walletAddress avatarUrl karma");
+
+  if (!comment) throw new Error("Comment not found");
+
+  return serializeComment(comment as PopulatedComment);
 }
 
 export async function voteComment(

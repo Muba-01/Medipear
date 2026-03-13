@@ -260,7 +260,7 @@ export default function CreatePostForm({ onSuccess, onCancel, defaultCommunity }
       setDone(true);
       router.refresh();
       if (onSuccess) onSuccess();
-      else router.push(communitySlug ? `/r/${communitySlug}` : "/");
+      else router.push(communitySlug ? `/p/${communitySlug}` : "/");
     } catch {
       setError("Network error. Please check your connection.");
       setSubmitting(false);
@@ -386,7 +386,7 @@ export default function CreatePostForm({ onSuccess, onCancel, defaultCommunity }
                 <div>
                   <span className="font-medium">{c.name}</span>
                   <span className="ml-2 text-xs" style={{ color: "var(--muted)" }}>
-                    r/{c.slug}
+                    🍐/{c.slug}
                   </span>
                 </div>
               </button>
@@ -396,14 +396,14 @@ export default function CreatePostForm({ onSuccess, onCancel, defaultCommunity }
                 <div
                   className="px-3 py-2 text-xs border-t"
                   style={{ borderColor: "var(--border)", color: "var(--muted)" }}>
-                  Will post as <span style={{ color: "#a78bfa" }}>r/{communitySlug}</span>
+                  Will post as <span style={{ color: "#a78bfa" }}>🍐/{communitySlug}</span>
                 </div>
               )}
           </div>
         )}
         {selectedCommunity && (
           <p className="mt-1 px-1 text-xs" style={{ color: "#a78bfa" }}>
-            r/{selectedCommunity.slug}
+            🍐/{selectedCommunity.slug}
           </p>
         )}
       </div>

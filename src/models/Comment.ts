@@ -11,6 +11,7 @@ export interface IComment extends Document {
   parentComment?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  editedAt?: Date;
 }
 
 const CommentSchema = new Schema<IComment>(
@@ -22,6 +23,7 @@ const CommentSchema = new Schema<IComment>(
     downvotes: [{ type: Schema.Types.ObjectId, ref: "User" }],
     score: { type: Number, default: 0 },
     parentComment: { type: Schema.Types.ObjectId, ref: "Comment", default: null },
+    editedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

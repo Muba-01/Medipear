@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+require("node:dns/promises").setServers(["1.1.1.1", "8.8.8.8"]);
+
 const MONGODB_URI = process.env.MONGODB_URI ?? "";
 
 interface MongooseCache {
@@ -28,6 +30,12 @@ export async function connectDB(): Promise<typeof mongoose> {
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
+    }).then((mongooseInstance) => {
+      console.log("Connected to MongoDB");
+      return mongooseInstance;
+    }).catch((err) => {
+      console.error("MongoDB connection error:", err);
+      throw err;
     });
   }
 

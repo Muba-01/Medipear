@@ -2,8 +2,8 @@
 import Link from "next/link";
 import Sidebar from "@/components/layout/Sidebar";
 import PostCard from "@/components/posts/PostCard";
-import CommentCard from "@/components/posts/CommentCard";
 import CommentForm from "@/components/posts/CommentForm";
+import ThreadedComments from "@/components/posts/ThreadedComments";
 import { getPostById } from "@/services/postService";
 import { getCommentsByPost } from "@/services/commentService";
 import { MessageSquare, ExternalLink } from "lucide-react";
@@ -11,58 +11,6 @@ import type { Comment } from "@/lib/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
-}
-
-// Helper to build a tree structure for nested comments
-function buildCommentTree(comments: Comment[]): Array<{ comment: Comment; replies: any[] }> {
-  const commentMap = new Map<string, { comment: Comment; replies: any[] }>();
-  
-  // Create entries for all comments
-  comments.forEach((comment) => {
-    if (!commentMap.has(comment.id)) {
-      commentMap.set(comment.id, { comment, replies: [] });
-    }
-  });
-
-  // Build parent-child relationships
-  const rootComments: Array<{ comment: Comment; replies: any[] }> = [];
-  comments.forEach((comment) => {
-    const node = commentMap.get(comment.id)!;
-    if (comment.parentComment) {
-      const parentNode = commentMap.get(comment.parentComment);
-      if (parentNode) {
-        parentNode.replies.push(node);
-      }
-    } else {
-      rootComments.push(node);
-    }
-  });
-
-  return rootComments;
-}
-
-// Recursive component to render comment tree
-function RenderCommentTree({
-  node,
-  depth = 0,
-}: {
-  node: { comment: Comment; replies: any[] };
-  depth?: number;
-}) {
-  return (
-    <>
-      <div key={node.comment.id} className="px-5 py-4">
-        <CommentCard comment={node.comment} depth={depth} />
-      </div>
-      {node.replies.length > 0 && (
-        <>
-          {node.replies.map((reply) => (
-            <RenderCommentTree key={reply.comment.id} node={reply} depth={depth + 1} />
-          ))}
-        </>
-      )}
-    </>
-  );
 }
 
 export default async function PostPage({ params }: PageProps) {
@@ -196,23 +144,7 @@ export default async function PostPage({ params }: PageProps) {
             </div>
 
             {/* Comment list */}
-            {comments.length === 0 ? (
-              <div className="px-5 py-10 flex flex-col items-center text-center">
-                <MessageSquare size={32} style={{ color: "var(--muted)" }} className="mb-3 opacity-40" />
-                <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>
-                  No comments yet
-                </p>
-                <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
-                  Be the first to share your thoughts.
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col divide-y" style={{ borderColor: "var(--border)" }}>
-                {buildCommentTree(comments).map((node) => (
-                  <RenderCommentTree key={node.comment.id} node={node} />
-                ))}
-              </div>
-            )}
+            <ThreadedComments comments={comments} />
           </div>
         </div>
         <Sidebar />

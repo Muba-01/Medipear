@@ -65,7 +65,7 @@ export default function CreatePage() {
               className="px-4 py-3 border-t"
               style={{ borderColor: "var(--border)" }}>
               <Link
-                href="/r/help"
+                href="/p/help"
                 className="text-xs font-medium hover:underline"
                 style={{ color: "var(--accent)" }}>
                 Read full posting guidelines →

@@ -21,7 +21,7 @@ export default function CommunityCard({ community }: CommunityCardProps) {
         style={{ background: community.banner }}>
         <span className="text-2xl">{community.icon}</span>
         <div>
-          <h3 className="text-sm font-bold text-white">r/{community.slug}</h3>
+          <h3 className="text-sm font-bold text-white">🍐/{community.slug}</h3>
           <p className="text-xs text-white/70">{community.name}</p>
         </div>
       </div>
@@ -55,7 +55,7 @@ export default function CommunityCard({ community }: CommunityCardProps) {
             {joined ? "Joined" : "Join"}
           </button>
           <Link
-            href={`/r/${community.slug}`}
+            href={`/p/${community.slug}`}
             className="w-8 h-8 flex items-center justify-center rounded-lg border hover:bg-white/5 transition-colors"
             style={{ borderColor: "var(--border)" }}>
             <ChevronRight size={14} style={{ color: "var(--muted)" }} />
