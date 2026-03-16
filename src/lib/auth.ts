@@ -1,11 +1,7 @@
 import { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-<<<<<<< HEAD
-import { findOrCreateUserByEmail, findUserByEmail, linkGoogleToUser } from "@/services/userService";
-=======
 import { findOrCreateUserByGoogleAccount, findUserByEmail, getUserById, linkGoogleToUser } from "@/services/userService";
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
 import { verifyPassword } from "@/lib/password";
 import { verifyLinkJWT } from "@/lib/jwt";
 
@@ -41,9 +37,6 @@ export function buildAuthOptions(rawLinkToken?: string | null): AuthOptions {
     secret: process.env.NEXTAUTH_SECRET,
     callbacks: {
       async signIn({ account, user }) {
-<<<<<<< HEAD
-        if (account?.provider === "google" && !user.email) return false;
-=======
         if (account?.provider === "google" && (!user.email || !account.providerAccountId)) {
           return false;
         }
@@ -53,38 +46,11 @@ export function buildAuthOptions(rawLinkToken?: string | null): AuthOptions {
           if (!linkPayload?.userId) return false;
         }
 
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
         return true;
       },
 
       async jwt({ token, account, user }) {
         // ── Google account linking ──────────────────────────────────────────────
-<<<<<<< HEAD
-        if (account?.provider === "google" && rawLinkToken && user?.email) {
-          const linkPayload = await verifyLinkJWT(rawLinkToken);
-          if (linkPayload?.userId) {
-            try {
-              const linked = await linkGoogleToUser(
-                linkPayload.userId,
-                user.email,
-                user.image ?? undefined
-              );
-              if (linked) {
-                token.userId = linked._id.toString();
-                token.username = linked.username;
-                token.walletAddress = linked.walletAddress ?? null;
-                token.provider = linked.authProvider;
-                return token;
-              }
-            } catch { /* fall through to normal sign-in */ }
-          }
-        }
-
-        // ── Normal Google sign-in ───────────────────────────────────────────────
-        if (account?.provider === "google" && user?.email) {
-          try {
-            const dbUser = await findOrCreateUserByEmail(
-=======
         if (account?.provider === "google" && rawLinkToken) {
           if (!user?.email || !account.providerAccountId) {
             throw new Error("Invalid Google link payload");
@@ -118,7 +84,6 @@ export function buildAuthOptions(rawLinkToken?: string | null): AuthOptions {
           try {
             const dbUser = await findOrCreateUserByGoogleAccount(
               account.providerAccountId,
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
               user.email,
               user.name ?? undefined,
               user.image ?? undefined
@@ -155,11 +120,6 @@ export function buildAuthOptions(rawLinkToken?: string | null): AuthOptions {
 
       async session({ session, token }) {
         if (token.userId) {
-<<<<<<< HEAD
-          session.user.id = token.userId;
-          session.user.username = token.username ?? "";
-          session.user.walletAddress = token.walletAddress ?? null;
-=======
           let walletAddress = token.walletAddress ?? null;
           let username = token.username ?? "";
 
@@ -176,7 +136,6 @@ export function buildAuthOptions(rawLinkToken?: string | null): AuthOptions {
           session.user.id = token.userId;
           session.user.username = username;
           session.user.walletAddress = walletAddress;
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
           session.user.provider = token.provider ?? "google";
         }
         return session;

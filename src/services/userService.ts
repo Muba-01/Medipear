@@ -10,33 +10,11 @@ function generateUsername(prefix: string): string {
 
 export async function findOrCreateUserByWallet(
   walletAddress: string
-<<<<<<< HEAD
-): Promise<IUser> {
-=======
 ): Promise<{ user: IUser; isNewUser: boolean }> {
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   await connectDB();
   const addr = walletAddress.toLowerCase();
 
   let user = await User.findOne({ walletAddress: addr });
-<<<<<<< HEAD
-=======
-  let isNewUser = false;
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
-  if (!user) {
-    const username = generateUsername("user" + addr.slice(2, 6));
-    user = await User.create({
-      walletAddress: addr,
-      username,
-      authProvider: "wallet",
-    });
-<<<<<<< HEAD
-  }
-  return user;
-}
-
-export async function findOrCreateUserByEmail(
-=======
     isNewUser = true;
   }
   return { user, isNewUser };
@@ -44,7 +22,6 @@ export async function findOrCreateUserByEmail(
 
 export async function findOrCreateUserByGoogleAccount(
   googleId: string,
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   email: string,
   name?: string,
   image?: string
@@ -52,20 +29,6 @@ export async function findOrCreateUserByGoogleAccount(
   await connectDB();
   const lowerEmail = email.toLowerCase();
 
-<<<<<<< HEAD
-  let user = await User.findOne({ email: lowerEmail });
-  if (!user) {
-    const base = (name ?? lowerEmail.split("@")[0]).replace(/[^a-z0-9]/gi, "");
-    const username = generateUsername(base || "user");
-    user = await User.create({
-      email: lowerEmail,
-      username,
-      avatarUrl: image ?? "",
-      authProvider: "google",
-    });
-  }
-  return user;
-=======
   const byGoogleId = await User.findOne({ googleId });
   if (byGoogleId) {
     return byGoogleId;
@@ -93,29 +56,10 @@ export async function findOrCreateUserByGoogleAccount(
     avatarUrl: image ?? "",
     authProvider: "google",
   });
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
 }
 
 export async function linkGoogleToUser(
   userId: string,
-<<<<<<< HEAD
-=======
-  googleId: string,
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
-  email: string,
-  avatarUrl?: string
-): Promise<IUser | null> {
-  await connectDB();
-  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
-  const lowerEmail = email.toLowerCase();
-<<<<<<< HEAD
-  // Make sure this email isn't already taken by a different user
-  const conflict = await User.findOne({
-    email: lowerEmail,
-    _id: { $ne: new mongoose.Types.ObjectId(userId) },
-  });
-  if (conflict) return null;
-=======
 
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
@@ -137,66 +81,10 @@ export async function linkGoogleToUser(
     throw new Error("Email already linked to another account");
   }
 
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   return User.findByIdAndUpdate(
     userId,
     {
       $set: {
-<<<<<<< HEAD
-=======
-        googleId,
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
-        email: lowerEmail,
-        googleLinked: true,
-        ...(avatarUrl ? { avatarUrl } : {}),
-      },
-    },
-    { new: true }
-  );
-}
-
-export async function findUserByEmail(email: string): Promise<IUser | null> {
-  await connectDB();
-  return User.findOne({ email: email.toLowerCase() }).select("+passwordHash");
-}
-
-export async function createUserWithEmail(
-  email: string,
-  username: string,
-  passwordHash: string
-): Promise<IUser> {
-  await connectDB();
-  return User.create({
-    email: email.toLowerCase(),
-    username,
-    passwordHash,
-    authProvider: "email",
-  });
-}
-
-export async function getUserById(id: string): Promise<IUser | null> {
-  await connectDB();
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return User.findById(id);
-}
-
-export async function getUserByWallet(
-  walletAddress: string
-): Promise<IUser | null> {
-  await connectDB();
-  return User.findOne({ walletAddress: walletAddress.toLowerCase() });
-}
-
-export async function linkWalletToUser(
-  userId: string,
-  walletAddress: string
-): Promise<IUser | null> {
-  await connectDB();
-<<<<<<< HEAD
-  return User.findByIdAndUpdate(
-    userId,
-    { walletAddress: walletAddress.toLowerCase(), authProvider: "wallet" },
-=======
 
   if (!mongoose.Types.ObjectId.isValid(userId)) return null;
   const normalizedWalletAddress = walletAddress.toLowerCase();
@@ -213,7 +101,6 @@ export async function linkWalletToUser(
   return User.findByIdAndUpdate(
     userId,
     { walletAddress: normalizedWalletAddress },
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
     { new: true }
   );
 }
