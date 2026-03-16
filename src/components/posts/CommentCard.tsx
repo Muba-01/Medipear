@@ -189,7 +189,7 @@ export default function CommentCard({ comment, depth = 0, hasReplies = false, co
           <span className="text-xs" style={{ color: "var(--muted)" }}>
             {comment.author.karma.toLocaleString()} karma
           </span>
-          <span className="text-xs" style={{ color: "var(--muted)" }}>
+          <span className="text-xs" style={{ color: "var(--muted)" }} suppressHydrationWarning>
             · {timeAgo(comment.createdAt)}
             {comment.editedAt && <span className="ml-1">(edited)</span>}
           </span>

@@ -55,6 +55,11 @@ export default function PostCard({ post, compact = false, onPostDeleted }: PostC
 
   const score = upvotes - downvotes;
   const isPostAuthor = userId === post.authorId;
+  const displayedEarned = Math.max(
+    0,
+    Number(post.author.tokensEarned ?? 0),
+    Number(post.tokenReward ?? 0)
+  );
 
   const handleVote = async (direction: "up" | "down") => {
     if (!isAuthenticated) {
@@ -230,11 +235,15 @@ export default function PostCard({ post, compact = false, onPostDeleted }: PostC
                 u/{post.author.username}
               </Link>
             </span>
-            <span className="text-xs" style={{ color: "var(--muted)" }}>
+            <span className="text-xs" style={{ color: "var(--muted)" }} suppressHydrationWarning>
               {timeAgo(post.createdAt)}
               {new Date(post.updatedAt) > new Date(post.createdAt) && (
                 <span className="ml-1" style={{ color: "var(--muted)" }}>(edited)</span>
               )}
+            </span>
+            <span style={{ color: "var(--border)" }}>·</span>
+            <span className="text-xs" style={{ color: "var(--muted)" }}>
+              {formatNumber(displayedEarned)} MPR earned
             </span>
           </div>
 

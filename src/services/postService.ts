@@ -46,6 +46,20 @@ type LeanPost = {
   updatedAt: Date;
 };
 
+const POST_REWARD_MIN = 2;
+const POST_REWARD_MAX = 15;
+const POST_REWARD_THRESHOLD = 0.5;
+
+function resolvePostTokenReward(trustScore: number): number {
+  const safeScore = Number.isFinite(trustScore) ? Math.max(0, Math.min(1, trustScore)) : 0;
+  if (safeScore <= POST_REWARD_THRESHOLD) {
+    return 0;
+  }
+
+  const reward = POST_REWARD_MIN + (POST_REWARD_MAX - POST_REWARD_MIN) * safeScore;
+  return Math.round(reward * 100) / 100;
+}
+
 function serializeAuthor(a: PopulatedAuthor): UserFE {
   return {
     id: a._id.toString(),
@@ -98,7 +112,7 @@ function serializePost(p: LeanPost, currentUserId?: string): PostFE {
     upvotes: upvoteIds.length,
     downvotes: downvoteIds.length,
     commentCount: p.commentCount,
-    tokenReward: 0,
+    tokenReward: resolvePostTokenReward(p.trustScore),
     trustScore: p.trustScore,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
