@@ -20,8 +20,6 @@ export async function POST() {
     maxAge: 0,
     path: "/",
   });
-<<<<<<< HEAD
-=======
   res.cookies.set(LINK_COOKIE, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -29,6 +27,5 @@ export async function POST() {
     maxAge: 0,
     path: "/",
   });
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   return res;
 }
