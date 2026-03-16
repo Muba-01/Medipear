@@ -2,6 +2,7 @@ import { Zap, Calendar, ExternalLink } from "lucide-react";
 import { shortenAddress } from "@/lib/utils";
 import Image from "next/image";
 import EditProfileButton from "./EditProfileButton";
+import TokenBalanceDisplay from "./TokenBalanceDisplay";
 interface ProfileHeaderProps {
   walletAddress?: string | null;
   username?: string | null;

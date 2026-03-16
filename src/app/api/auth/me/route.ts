@@ -22,9 +22,15 @@ export async function GET(req: NextRequest) {
         try {
           const dbUser = await getUserByWallet(payload.walletAddress);
           if (dbUser) {
-return NextResponse.json({
-    displayName: dbUser.displayName ?? dbUser.username,
-    avatarUrl: dbUser.avatarUrl,
+            const walletLinked = !!dbUser.walletAddress;
+            const googleLinked = !!dbUser.googleId;
+            const emailLinked = !!dbUser.email;
+            return NextResponse.json({
+              walletAddress: dbUser.walletAddress ?? null,
+              userId: dbUser._id.toString(),
+              username: dbUser.username,
+              displayName: dbUser.displayName ?? dbUser.username,
+              avatarUrl: dbUser.avatarUrl,
               karma: dbUser.karma,
               bio: dbUser.bio ?? null,
               birthday: dbUser.birthday ?? null,
@@ -38,7 +44,8 @@ return NextResponse.json({
               googleLinked,
               emailLinked,
               needsGoogleLink: !googleLinked,
-              needsWalletLink: false,            });
+              needsWalletLink: false,
+            });
           }
         } catch { /* fall through */ }
       }
@@ -55,13 +62,19 @@ return NextResponse.json({
   // 2. NextAuth session (Google OAuth)
   const session = await getServerSession(authOptions);
   if (session?.user?.id) {
-const walletLinked = !!dbUser.walletAddress;
+    const provider = session.user.provider ?? "google";
+    if (process.env.MONGODB_URI) {
+      try {
+        const dbUser = await getUserById(session.user.id);
+        if (dbUser) {
+          const walletLinked = !!dbUser.walletAddress;
           const googleLinked = !!dbUser.googleId;
-          const emailLinked = !!dbUser.email;          return NextResponse.json({
+          const emailLinked = !!dbUser.email;
+          return NextResponse.json({
             walletAddress: dbUser.walletAddress ?? null,
             userId: dbUser._id.toString(),
             username: dbUser.username,
-displayName: dbUser.displayName ?? dbUser.username,
+            displayName: dbUser.displayName ?? dbUser.username,
             avatarUrl: dbUser.avatarUrl,
             karma: dbUser.karma,
             bio: dbUser.bio ?? null,
@@ -76,19 +89,23 @@ displayName: dbUser.displayName ?? dbUser.username,
             googleLinked,
             emailLinked,
             needsGoogleLink: provider === "wallet" && !googleLinked,
-            needsWalletLink: provider === "google" && !walletLinked,          });
+            needsWalletLink: provider === "google" && !walletLinked,
+          });
         }
-      } catch { /* fall through */ }
+      } catch {
+        /* fall through */
+      }
     }
     return NextResponse.json({
       walletAddress: null,
       userId: session.user.id,
       username: session.user.name ?? null,
-provider,
+      provider,
       onboardingCompleted: false,
       onboardingStep: 1,
       needsGoogleLink: false,
-      needsWalletLink: provider === "google",    });
+      needsWalletLink: provider === "google",
+    });
   }
 
   return NextResponse.json({ walletAddress: null }, { status: 401 });

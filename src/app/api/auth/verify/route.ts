@@ -8,6 +8,7 @@ import AuthNonce from "@/models/AuthNonce";
 const COOKIE_NAME = "mp_token";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const NONCE_COOKIE = "mp_nonce_id";
+
 export async function POST(req: NextRequest) {
   let body: { address?: string; signature?: string };
 
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
-const nonceId = req.cookies.get(NONCE_COOKIE)?.value;
+  const nonceId = req.cookies.get(NONCE_COOKIE)?.value;
   if (!nonceId) {
     return NextResponse.json({ error: "Nonce expired or not found. Please try again." }, { status: 401 });
   }
@@ -38,17 +39,20 @@ const nonceId = req.cookies.get(NONCE_COOKIE)?.value;
     return NextResponse.json({ error: "Authentication service unavailable" }, { status: 503 });
   }
 
+  const normalizedWalletAddress = address.toLowerCase();
+
   const nonceDoc = await AuthNonce.findOne({
     _id: nonceId,
-    address: address.toLowerCase(),
+    address: normalizedWalletAddress,
     usedAt: null,
     expiresAt: { $gt: new Date() },
   });
+
   if (!nonceDoc) {
     return NextResponse.json({ error: "Nonce expired or not found. Please try again." }, { status: 401 });
   }
 
-  const nonce = nonceDoc.nonce;  const message = `Sign this message to authenticate with Medipear.\n\nNonce: ${nonce}`;
+  const message = `Sign this message to authenticate with Medipear.\n\nNonce: ${nonceDoc.nonce}`;
 
   let recoveredAddress: string;
   try {
@@ -57,23 +61,33 @@ const nonceId = req.cookies.get(NONCE_COOKIE)?.value;
     return NextResponse.json({ error: "Signature verification failed" }, { status: 401 });
   }
 
-  if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+  if (recoveredAddress.toLowerCase() !== normalizedWalletAddress) {
     return NextResponse.json({ error: "Signature does not match address" }, { status: 401 });
   }
 
-let isNewUser = false;
+  nonceDoc.usedAt = new Date();
+  await nonceDoc.save();
+
+  let dbUser: any = null;
+  let isNewUser = false;
+
   if (process.env.MONGODB_URI) {
     try {
-      const result = await findOrCreateUserByWallet(address);
+      const result = await findOrCreateUserByWallet(normalizedWalletAddress);
       dbUser = result.user;
-      isNewUser = result.isNewUser;    } catch {
-      // Non-fatal: proceed without DB
+      isNewUser = result.isNewUser;
+    } catch {
+      // Non-fatal: allow login without profile hydration
     }
   }
-const res = NextResponse.json({
+
+  const token = await signJWT(normalizedWalletAddress);
+
+  const res = NextResponse.json({
     walletAddress: normalizedWalletAddress,
     username: dbUser?.username ?? null,
-userId: dbUser?._id?.toString() ?? null,
+    displayName: dbUser?.displayName ?? dbUser?.username ?? null,
+    userId: dbUser?._id?.toString() ?? null,
     onboardingCompleted: !!dbUser?.onboardingCompleted,
     onboardingStep: dbUser?.onboardingStep ?? 1,
     email: dbUser?.email ?? null,
@@ -82,12 +96,7 @@ userId: dbUser?._id?.toString() ?? null,
     emailLinked: !!dbUser?.email,
     provider: "wallet",
     isNewUser,
-    needsGoogleLink: !dbUser?.googleId,  });
-
-  console.info("[wallet-auth] verify success", {
-    providerWalletAddress: normalizedWalletAddress,
-    sessionWalletAddress: normalizedWalletAddress,
-    matches: true,
+    needsGoogleLink: !dbUser?.googleId,
   });
 
   res.cookies.set(NONCE_COOKIE, "", {

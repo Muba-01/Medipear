@@ -1,0 +1,7 @@
+flask
+flask-cors
+joblib
+vaderSentiment
+nltk
+numpy
+scikit-learn

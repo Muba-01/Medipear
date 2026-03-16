@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/getAuthUser";
 import { votePost } from "@/services/postService";
 import { VoteSchema } from "@/lib/validations";
+import { connectDB } from "@/lib/db";
+import Post from "@/models/Post";
+import { rewardsOracle } from "@/services/rewardsOracleService";
 interface RouteContext {
   params: Promise<{ id: string }>;
 }

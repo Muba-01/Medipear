@@ -26,7 +26,7 @@ export default function InfoTooltip({ text, className = "" }: InfoTooltipProps) 
       </button>
 
       {showTooltip && (
-        <div
+        <span
           className="absolute left-full top-1/2 -translate-y-1/2 z-50 text-white text-xs rounded-lg leading-relaxed pointer-events-none"
           style={{
             marginLeft: "10px",
@@ -42,7 +42,7 @@ export default function InfoTooltip({ text, className = "" }: InfoTooltipProps) 
           }}
         >
           {text}
-        </div>
+        </span>
       )}
     </span>
   );

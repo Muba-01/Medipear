@@ -1,4 +1,4 @@
-import { ethers, Contract, BrowserProvider } from "ethers";
+import { ethers, Contract, BrowserProvider, JsonRpcProvider, type Provider } from "ethers";
 
 // MediPearsToken ABI (minimal interface needed for frontend)
 const TOKEN_ABI = [
@@ -33,11 +33,72 @@ export interface TransactionState {
 
 class BlockchainService {
   private provider: BrowserProvider | null = null;
-  private tokenContract: Contract | null = null;
-  private stakingContract: Contract | null = null;
+  private localRpcProvider: JsonRpcProvider | null = null;
 
   private tokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS;
   private stakingAddress = process.env.NEXT_PUBLIC_STAKING_ADDRESS;
+  private localRpcUrl = process.env.NEXT_PUBLIC_LOCAL_RPC_URL || "http://127.0.0.1:8545";
+
+  private getLocalProvider(): JsonRpcProvider {
+    if (!this.localRpcProvider) {
+      this.localRpcProvider = new JsonRpcProvider(this.localRpcUrl);
+    }
+    return this.localRpcProvider;
+  }
+
+  private async hasCode(provider: Provider, address: string): Promise<boolean> {
+    const code = await provider.getCode(address);
+    return !!code && code !== "0x";
+  }
+
+  private async getReadProvider(address: string, label: "token" | "staking"): Promise<Provider> {
+    if (!ethers.isAddress(address)) {
+      throw new Error(`Invalid ${label} contract address in environment: ${address}`);
+    }
+
+    let browserProvider: BrowserProvider | null = null;
+    if (typeof window !== "undefined" && window.ethereum) {
+      browserProvider = await this.initializeProvider();
+      if (await this.hasCode(browserProvider, address)) {
+        return browserProvider;
+      }
+    }
+
+    const localProvider = this.getLocalProvider();
+    if (await this.hasCode(localProvider, address)) {
+      return localProvider;
+    }
+
+    const browserNetwork = browserProvider
+      ? (await browserProvider.getNetwork()).chainId.toString()
+      : "no-wallet-provider";
+    const localNetwork = (await localProvider.getNetwork()).chainId.toString();
+
+    throw new Error(
+      `${label === "token" ? "Token" : "Staking"} contract not found at ${address}. ` +
+        `Checked wallet chain ${browserNetwork} and local RPC chain ${localNetwork}. ` +
+        "Switch wallet to your deploy network or update .env.local addresses."
+    );
+  }
+
+  private async ensureContractDeployed(
+    provider: Provider,
+    address: string,
+    label: "token" | "staking"
+  ): Promise<void> {
+    if (!ethers.isAddress(address)) {
+      throw new Error(`Invalid ${label} contract address in environment: ${address}`);
+    }
+
+    const code = await provider.getCode(address);
+    if (!code || code === "0x") {
+      const network = await provider.getNetwork();
+      throw new Error(
+        `${label === "token" ? "Token" : "Staking"} contract not found at ${address} on chain ${network.chainId.toString()}. ` +
+          "You are likely connected to the wrong wallet network or using stale .env.local contract addresses."
+      );
+    }
+  }
 
   async initializeProvider(): Promise<BrowserProvider> {
     if (!window.ethereum) {
@@ -60,27 +121,29 @@ class BlockchainService {
         );
       }
 
-      const provider = await this.initializeProvider();
+      const provider = await this.getReadProvider(this.tokenAddress, "token");
 
-      if (!this.tokenContract && this.tokenAddress) {
-        this.tokenContract = new ethers.Contract(
-          this.tokenAddress,
-          TOKEN_ABI,
-          provider
-        );
+      if (!ethers.isAddress(walletAddress)) {
+        throw new Error(`Invalid wallet address: ${walletAddress}`);
       }
 
-      if (!this.tokenContract) {
-        throw new Error(
-          "Failed to initialize token contract. Please check NEXT_PUBLIC_TOKEN_ADDRESS in .env.local"
-        );
-      }
-
-      const balance = await this.tokenContract.balanceOf(walletAddress);
-      const decimals = await this.tokenContract.decimals();
+      const tokenContract = new ethers.Contract(this.tokenAddress, TOKEN_ABI, provider);
+      const balance = await tokenContract.balanceOf(walletAddress);
+      const decimals = await tokenContract.decimals();
 
       return ethers.formatUnits(balance, decimals);
     } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as { code?: string }).code === "BAD_DATA"
+      ) {
+        throw new Error(
+          "Token contract call failed (empty response). Check wallet network and NEXT_PUBLIC_TOKEN_ADDRESS deployment."
+        );
+      }
+
       console.error("[BlockchainService] Failed to fetch token balance:", error);
       throw error;
     }
@@ -95,23 +158,14 @@ class BlockchainService {
         );
       }
 
-      const provider = await this.initializeProvider();
+      const provider = await this.getReadProvider(this.stakingAddress, "staking");
 
-      if (!this.stakingContract && this.stakingAddress) {
-        this.stakingContract = new ethers.Contract(
-          this.stakingAddress,
-          STAKING_ABI,
-          provider
-        );
+      if (!ethers.isAddress(walletAddress)) {
+        throw new Error(`Invalid wallet address: ${walletAddress}`);
       }
 
-      if (!this.stakingContract) {
-        throw new Error(
-          "Failed to initialize staking contract. Please check NEXT_PUBLIC_STAKING_ADDRESS in .env.local"
-        );
-      }
-
-      const stakeData = await this.stakingContract.getUserStake(walletAddress);
+      const stakingContract = new ethers.Contract(this.stakingAddress, STAKING_ABI, provider);
+      const stakeData = await stakingContract.getUserStake(walletAddress);
 
       return {
         amount: stakeData.amount,

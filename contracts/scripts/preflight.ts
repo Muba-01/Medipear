@@ -54,9 +54,9 @@ if (mode === "hardhat" || mode === "localhost") {
   }
 
   if (!oracleAddress) {
-    warn("ORACLE_WALLET_ADDRESS is not set; deploy script will use local fallback oracle on hardhat network.");
+    warn("ORACLE_WALLET_ADDRESS is not set; deploy script will use local fallback oracle on hardhat/localhost networks.");
   } else if (!isAddress(oracleAddress)) {
-    fail("ORACLE_WALLET_ADDRESS is set but invalid. Use a valid EVM address.");
+    warn("ORACLE_WALLET_ADDRESS is set but invalid; deploy script will ignore it and use local fallback oracle on hardhat/localhost networks.");
   }
 
   info("Local deploy preflight checks passed.");

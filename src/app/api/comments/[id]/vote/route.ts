@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/getAuthUser";
 import { voteComment } from "@/services/commentService";
 import { VoteSchema } from "@/lib/validations";
+import { connectDB } from "@/lib/db";
+import Comment from "@/models/Comment";
+import { rewardsOracle } from "@/services/rewardsOracleService";
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
@@ -50,7 +53,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       }
     }
     
-=======    return NextResponse.json(result);
+    return NextResponse.json(result);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to vote on comment";
     if (message.includes("own comment")) {

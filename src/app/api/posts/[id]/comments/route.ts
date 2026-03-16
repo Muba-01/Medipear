@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/getAuthUser";
 import { getCommentsByPost, createComment } from "@/services/commentService";
 import { CreateCommentSchema } from "@/lib/validations";
+import { rewardsOracle } from "@/services/rewardsOracleService";
 interface RouteContext {
   params: Promise<{ id: string }>;
 }

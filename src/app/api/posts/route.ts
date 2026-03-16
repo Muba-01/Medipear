@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/getAuthUser";
 import { getPosts, createPost } from "@/services/postService";
 import { CreatePostSchema } from "@/lib/validations";
+import { rewardsOracle } from "@/services/rewardsOracleService";
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const communitySlug = searchParams.get("community") ?? undefined;

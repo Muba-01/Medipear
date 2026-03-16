@@ -20,6 +20,10 @@ export interface IUser extends Document {
   joinedCommunities: mongoose.Types.ObjectId[];
   onboardingCompleted: boolean;
   onboardingStep: number;
+  eligibleForRewards: boolean;
+  trustScoreAverage: number;
+  crediblePostCount: number;
+  rewardEligibilityCheckedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +48,10 @@ const UserSchema = new Schema<IUser>(
     joinedCommunities: [{ type: Schema.Types.ObjectId, ref: "Community" }],
     onboardingCompleted: { type: Boolean, default: false },
     onboardingStep: { type: Number, default: 1, min: 1, max: 7 },
+    eligibleForRewards: { type: Boolean, default: false },
+    trustScoreAverage: { type: Number, default: 0, min: 0, max: 1 },
+    crediblePostCount: { type: Number, default: 0, min: 0 },
+    rewardEligibilityCheckedAt: { type: Date },
   },
   { timestamps: true }
 );

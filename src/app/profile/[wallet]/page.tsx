@@ -1,9 +1,6 @@
 ﻿import { Suspense } from "react";
 import ProfileHeader from "@/components/profile/ProfileHeader";
-<<<<<<< HEAD
-=======
 import AccountConnections from "@/components/profile/AccountConnections";
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
 import PostList from "@/components/posts/PostList";
 import Sidebar from "@/components/layout/Sidebar";
 import { getPosts } from "@/services/postService";
@@ -67,10 +64,7 @@ export default async function ProfilePage({ params }: PageProps) {
             bio={user?.bio ?? ""}
             isOwnProfile={isOwnProfile}
           />
-<<<<<<< HEAD
-=======
           {isOwnProfile ? <AccountConnections /> : null}
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
           <Suspense><PostList posts={posts} /></Suspense>
         </div>
         <Sidebar />

@@ -1,10 +1,7 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 
 export type PostType = "text" | "image" | "link";
-<<<<<<< HEAD
 export type AIStatus = "approved" | "rejected" | "pending";
-=======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
 
 export interface IPost extends Document {
   _id: mongoose.Types.ObjectId;
@@ -21,10 +18,7 @@ export interface IPost extends Document {
   linkUrl?: string;
   commentCount: number;
   trustScore: number;
-<<<<<<< HEAD
   aiModerationStatus: AIStatus;
-=======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,10 +38,7 @@ const PostSchema = new Schema<IPost>(
     linkUrl: { type: String, trim: true },
     commentCount: { type: Number, default: 0, min: 0 },
     trustScore: { type: Number, default: 0.5, min: 0, max: 1 },
-<<<<<<< HEAD
     aiModerationStatus: { type: String, enum: ["approved", "rejected", "pending"], default: "pending" },
-=======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   },
   { timestamps: true }
 );

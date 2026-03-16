@@ -39,10 +39,7 @@ export interface RewardsVaultInterface extends Interface {
       | "SILVER_THRESHOLD"
       | "getBoostBps"
       | "getRoleAdmin"
-<<<<<<< HEAD
       | "getUserStake"
-=======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
       | "grantRole"
       | "hasRole"
       | "renounceRole"
@@ -118,13 +115,10 @@ export interface RewardsVaultInterface extends Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-<<<<<<< HEAD
     functionFragment: "getUserStake",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-=======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
     functionFragment: "grantRole",
     values: [BytesLike, AddressLike]
   ): string;
@@ -212,13 +206,10 @@ export interface RewardsVaultInterface extends Interface {
     functionFragment: "getRoleAdmin",
     data: BytesLike
   ): Result;
-<<<<<<< HEAD
   decodeFunctionResult(
     functionFragment: "getUserStake",
     data: BytesLike
   ): Result;
-=======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
   decodeFunctionResult(
@@ -414,15 +405,12 @@ export interface RewardsVault extends BaseContract {
 
   getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
 
-<<<<<<< HEAD
   getUserStake: TypedContractMethod<
     [user: AddressLike],
     [[bigint, bigint] & { amount: bigint; unlockedAt: bigint }],
     "view"
   >;
 
-=======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   grantRole: TypedContractMethod<
     [role: BytesLike, account: AddressLike],
     [void],
@@ -509,7 +497,6 @@ export interface RewardsVault extends BaseContract {
     nameOrSignature: "getRoleAdmin"
   ): TypedContractMethod<[role: BytesLike], [string], "view">;
   getFunction(
-<<<<<<< HEAD
     nameOrSignature: "getUserStake"
   ): TypedContractMethod<
     [user: AddressLike],
@@ -517,8 +504,6 @@ export interface RewardsVault extends BaseContract {
     "view"
   >;
   getFunction(
-=======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
     nameOrSignature: "grantRole"
   ): TypedContractMethod<
     [role: BytesLike, account: AddressLike],

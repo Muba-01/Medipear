@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/getAuthUser";
 import { toggleJoinCommunity } from "@/services/communityService";
+import { rewardsOracle } from "@/services/rewardsOracleService";
 interface RouteContext {
   params: Promise<{ slug: string }>;
 }

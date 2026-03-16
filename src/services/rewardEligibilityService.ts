@@ -9,10 +9,10 @@ import Post from "@/models/Post";
 import mongoose from "mongoose";
 
 // Eligibility requirements
-const REQUIRED_CREDIBLE_POSTS = 10;
-const MINIMUM_TRUST_SCORE = 0.7;
-const MINIMUM_ACCOUNT_AGE_HOURS = 48;
-const POST_MINIMUM_AGE_HOURS = 24;
+const REQUIRED_CREDIBLE_POSTS = 5;
+const MINIMUM_TRUST_SCORE = 0.5;
+const MINIMUM_ACCOUNT_AGE_HOURS = 0;
+const POST_MINIMUM_AGE_HOURS = 0;
 
 export interface EligibilityCheckResult {
   eligible: boolean;

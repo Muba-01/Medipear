@@ -3,31 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-<<<<<<< HEAD
-import { Search, Zap, Bell, Menu, X, LogOut, User, Plus } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-=======
 import { Search, Zap, Bell, Menu, X, LogOut, User, Plus, Sun, Moon, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
 import { shortenAddress } from "@/lib/utils";
 import Image from "next/image";
 import CreateCommunityModal from "@/components/community/CreateCommunityModal";
 import AuthModal from "@/components/layout/AuthModal";
-<<<<<<< HEAD
-import { Users } from "lucide-react";
-
-export default function Navbar() {
-  const router = useRouter();
-  const { isAuthenticated, isLoading, walletAddress, userId, username, avatarUrl, provider, login, logout, error } = useAuth();
-=======
 
 export default function Navbar() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const { isAuthenticated, isLoading, walletAddress, userId, username, avatarUrl, provider, login, logout, error, walletNeedsVerification, walletNotice, dismissWalletNotice } = useAuth();
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   const displayName = username ?? (walletAddress ? shortenAddress(walletAddress) : null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -108,11 +95,7 @@ export default function Navbar() {
       style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
       <div className="h-full max-w-7xl mx-auto px-4 flex items-center gap-4">
         {/* Logo */}
-<<<<<<< HEAD
-        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-=======
         <Link href="/" className="flex items-center gap-2 shrink-0">
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center relative"
             style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}>
@@ -235,8 +218,6 @@ export default function Navbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-<<<<<<< HEAD
-=======
           <button
             onClick={toggleTheme}
             className="w-8 h-8 flex items-center justify-center rounded-lg border hover:bg-white/5 transition-colors"
@@ -246,7 +227,6 @@ export default function Navbar() {
             {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
           </button>
 
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
           {isAuthenticated && (
             <Link
               href="/create"
@@ -377,8 +357,6 @@ export default function Navbar() {
         </div>
       )}
 
-<<<<<<< HEAD
-=======
       {walletNeedsVerification && walletNotice && (
         <div
           className="absolute top-14 left-1/2 -translate-x-1/2 mt-2 w-[min(92vw,560px)] rounded-lg border px-4 py-3 shadow-xl z-50"
@@ -404,7 +382,6 @@ export default function Navbar() {
         </div>
       )}
 
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div
@@ -428,15 +405,12 @@ export default function Navbar() {
             />
           </div>
           <nav className="flex flex-col gap-1">
-<<<<<<< HEAD
-=======
             <button
               onClick={toggleTheme}
               className="px-3 py-2 rounded-lg text-sm hover:bg-white/5 transition-colors text-left"
               style={{ color: "var(--foreground)" }}>
               {theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
             </button>
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
             {[
               { href: "/", label: "Home" },
               { href: "/explore", label: "Explore" },

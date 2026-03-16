@@ -4,6 +4,7 @@ import Post from "@/models/Post";
 import Community from "@/models/Community";
 import { CreatePostInput } from "@/lib/validations";
 import { Post as PostFE, User as UserFE, Community as CommunityFE } from "@/lib/types";
+
 type PopulatedAuthor = {
   _id: mongoose.Types.ObjectId;
   username: string;
@@ -67,7 +68,7 @@ function serializeCommunity(c: PopulatedCommunity): CommunityFE {
     description: c.description,
     memberCount: c.membersCount,
     postCount: 0,
-    icon: c.iconUrl || "🌐",
+    icon: c.iconUrl || "Globe",
     banner: c.bannerUrl,
     tags: [],
     createdAt: c.createdAt?.toISOString() ?? "",
@@ -113,10 +114,11 @@ const POPULATE_COMMUNITY = "name slug description membersCount iconUrl bannerUrl
 
 export type GetPostsFilter = {
   communitySlug?: string;
-communityIds?: string[];
+  communityIds?: string[];
   authorWallet?: string;
   authorId?: string;
-  interests?: string[];  sort?: "hot" | "new" | "top" | "rising";
+  interests?: string[];
+  sort?: "hot" | "new" | "top" | "rising";
   limit?: number;
   page?: number;
   search?: string;
@@ -132,25 +134,41 @@ export async function getPosts(
   const query: Record<string, unknown> = {};
 
   if (filter.communitySlug) {
-    const comm = await Community.findOne({
-      slug: filter.communitySlug.toLowerCase(),
-    }).lean();
+    const comm = await Community.findOne({ slug: filter.communitySlug.toLowerCase() }).lean();
     if (!comm) return [];
     query.community = comm._id;
   }
 
-if (filter.interests && filter.interests.length > 0 && !filter.search) {
-    const interestRegexes = filter.interests.map((interest) =>
-      new RegExp(interest.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
-    );
+  if (filter.communityIds && filter.communityIds.length > 0) {
+    const ids = filter.communityIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    if (ids.length > 0) query.community = { $in: ids };
+  }
 
+  if (filter.authorId && mongoose.Types.ObjectId.isValid(filter.authorId)) {
+    query.author = new mongoose.Types.ObjectId(filter.authorId);
+  } else if (filter.authorWallet) {
+    const authorUser = await import("@/models/User").then((m) =>
+      m.default.findOne({ walletAddress: filter.authorWallet!.toLowerCase() }).select("_id").lean()
+    );
+    if (!authorUser) return [];
+    query.author = authorUser._id;
+  }
+
+  if (filter.search && filter.search.trim()) {
+    const regex = new RegExp(filter.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    query.$or = [{ title: regex }, { content: regex }];
+  } else if (filter.interests && filter.interests.length > 0) {
     const interestFilters: Record<string, unknown>[] = [];
-    for (const regex of interestRegexes) {
+    for (const interest of filter.interests) {
+      const regex = new RegExp(interest.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
       interestFilters.push({ title: regex }, { content: regex }, { tags: regex });
     }
+    query.$or = interestFilters;
+  }
 
-    query.$or = [...(Array.isArray(query.$or) ? query.$or : []), ...interestFilters];
-  }  const sortMap: Record<string, Record<string, number>> = {
+  const sortMap: Record<string, Record<string, number>> = {
     new: { createdAt: -1 },
     top: { score: -1, createdAt: -1 },
     hot: { score: -1, createdAt: -1 },
@@ -165,17 +183,10 @@ if (filter.interests && filter.interests.length > 0 && !filter.search) {
     .limit(filter.limit ?? 50)
     .lean();
 
-  let posts = (raw as unknown as LeanPost[]).map((p) =>
-    serializePost(p, currentUserId)
-  );
-
-  return posts;
+  return (raw as unknown as LeanPost[]).map((p) => serializePost(p, currentUserId));
 }
 
-export async function getPostById(
-  id: string,
-  currentUserId?: string
-): Promise<PostFE | null> {
+export async function getPostById(id: string, currentUserId?: string): Promise<PostFE | null> {
   if (!process.env.MONGODB_URI) return null;
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
   await connectDB();
@@ -186,17 +197,39 @@ export async function getPostById(
     .lean();
 
   if (!raw) return null;
-  console.log("[DEBUG] getPostById - raw post trustScore from DB:", raw.trustScore);
-  const serialized = serializePost(raw as unknown as LeanPost, currentUserId);
-  console.log("[DEBUG] getPostById - serialized post trustScore:", serialized.trustScore);
-  return serialized;
+  return serializePost(raw as unknown as LeanPost, currentUserId);
 }
 
-// Get trust score from ML service
+async function getTrustScore(text: string): Promise<number> {
+  try {
+    const response = await fetch("http://localhost:5000/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) return 0.5;
+    const data = await response.json();
+    const score = Number(data?.trust_index ?? data?.trust_score ?? data?.score ?? 0.5);
+    if (Number.isNaN(score)) return 0.5;
+    return Math.max(0, Math.min(1, score));
+  } catch {
+    return 0.5;
+  }
+}
+
+export async function createPost(input: CreatePostInput, authorId: string): Promise<PostFE> {
+  if (!process.env.MONGODB_URI) throw new Error("Database not configured");
+  await connectDB();
+
+  if (!mongoose.Types.ObjectId.isValid(authorId)) throw new Error("Invalid author");
+
+  const community = await Community.findOne({ slug: input.communitySlug?.toLowerCase?.() ?? input.communitySlug });
+  if (!community) throw new Error("Community not found");
+
   const textToScore = input.content || input.title;
-  console.log("[DEBUG] Text to score:", textToScore);
   const trustScore = await getTrustScore(textToScore);
-  console.log("[DEBUG] Trust score from AI service:", trustScore);
+
   const created = await Post.create({
     title: input.title,
     content: input.content,
@@ -206,15 +239,16 @@ export async function getPostById(
     tags: input.tags ?? [],
     imageUrl: input.imageUrl || undefined,
     linkUrl: input.linkUrl || undefined,
-trustScore,
+    trustScore,
   });
-  console.log("[DEBUG] Post created with trustScore:", created.trustScore);
+
   const populated = await Post.findById(created._id)
     .populate<{ author: PopulatedAuthor }>("author", POPULATE_AUTHOR)
     .populate<{ community: PopulatedCommunity }>("community", POPULATE_COMMUNITY)
     .lean();
 
-console.log("[DEBUG] Post fetched from DB with trustScore:", populated?.trustScore);  return serializePost(populated as unknown as LeanPost, authorId);
+  if (!populated) throw new Error("Failed to create post");
+  return serializePost(populated as unknown as LeanPost, authorId);
 }
 
 export async function votePost(
@@ -230,9 +264,7 @@ export async function votePost(
   const post = await Post.findById(postId);
   if (!post) return null;
 
-  // Prevent users from voting on their own posts
   if (post.author.equals(userObjId)) {
-    console.log("[DEBUG] votePost - user attempted to vote on their own post");
     throw new Error("You cannot vote on your own post");
   }
 
@@ -246,13 +278,11 @@ export async function votePost(
       post.upvotes.push(userObjId);
       post.downvotes = post.downvotes.filter((id) => !id.equals(userObjId));
     }
+  } else if (hasDownvoted) {
+    post.downvotes = post.downvotes.filter((id) => !id.equals(userObjId));
   } else {
-    if (hasDownvoted) {
-      post.downvotes = post.downvotes.filter((id) => !id.equals(userObjId));
-    } else {
-      post.downvotes.push(userObjId);
-      post.upvotes = post.upvotes.filter((id) => !id.equals(userObjId));
-    }
+    post.downvotes.push(userObjId);
+    post.upvotes = post.upvotes.filter((id) => !id.equals(userObjId));
   }
 
   post.score = post.upvotes.length - post.downvotes.length;
@@ -263,6 +293,7 @@ export async function votePost(
     .populate<{ community: PopulatedCommunity }>("community", POPULATE_COMMUNITY)
     .lean();
 
+  if (!populated) return null;
   return serializePost(populated as unknown as LeanPost, userId);
 }
 
@@ -271,107 +302,49 @@ export async function updatePost(
   userId: string,
   updates: { title: string; content: string; tags: string[] }
 ): Promise<PostFE | null> {
-  if (!mongoose.Types.ObjectId.isValid(postId)) {
-    console.log("[DEBUG] updatePost - invalid post ID:", postId);
-    return null;
-  }
-
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    console.log("[DEBUG] updatePost - invalid user ID:", userId);
-    throw new Error("Invalid user ID");
-  }
+  if (!mongoose.Types.ObjectId.isValid(postId)) return null;
+  if (!mongoose.Types.ObjectId.isValid(userId)) throw new Error("Invalid user ID");
 
   await connectDB();
-
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
-  // Fetch the original post to check if content changed
-  const originalPost = await Post.findOne({
-    _id: postId,
-    author: userObjectId,
-  }).lean();
-
+  const originalPost = await Post.findOne({ _id: postId, author: userObjectId }).lean();
   if (!originalPost) {
-    // Either the post doesn't exist or the user is not the owner
     throw new Error("Unauthorized: You can only edit your own posts");
   }
 
-  // Determine if content or title changed
+  let trustScoreUpdate: { trustScore?: number } = {};
   const contentChanged = originalPost.content !== updates.content || originalPost.title !== updates.title;
-  
-// Recalculate trustScore if content changed  let trustScoreUpdate = {};
   if (contentChanged) {
-    const textToScore = updates.content || updates.title;
-    console.log("[DEBUG] updatePost - content changed, recalculating trustScore for text:", textToScore);
-const newTrustScore = await getTrustScore(textToScore);
-    console.log("[DEBUG] updatePost - new trustScore calculated:", newTrustScore);
-    trustScoreUpdate = { trustScore: newTrustScore };  }
+    trustScoreUpdate = { trustScore: await getTrustScore(updates.content || updates.title) };
+  }
 
-  // Update only the post owned by this user
   const result = await Post.findOneAndUpdate(
-    {
-      _id: postId,
-      author: userObjectId,
-    },
-    {
-      ...updates,
-      ...trustScoreUpdate,
-      updatedAt: new Date(),
-    },
-    {
-      new: true,
-      runValidators: true,
-    }
-  ).populate<{ author: PopulatedAuthor }>("author", POPULATE_AUTHOR)
+    { _id: postId, author: userObjectId },
+    { ...updates, ...trustScoreUpdate, updatedAt: new Date() },
+    { new: true, runValidators: true }
+  )
+    .populate<{ author: PopulatedAuthor }>("author", POPULATE_AUTHOR)
     .populate<{ community: PopulatedCommunity }>("community", POPULATE_COMMUNITY)
     .lean();
 
   if (!result) {
-    // Either the post doesn't exist or the user is not the owner
     throw new Error("Unauthorized: You can only edit your own posts");
   }
 
-  console.log("[DEBUG] updatePost - update successful for post:", postId);
   return serializePost(result as unknown as LeanPost, userId);
 }
 
-export async function deletePost(
-  postId: string,
-  userId: string
-): Promise<boolean> {
-  if (!mongoose.Types.ObjectId.isValid(postId)) {
-    console.log("[DEBUG] deletePost - invalid post ID:", postId);
-    return false;
-  }
-  
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    console.log("[DEBUG] deletePost - invalid user ID:", userId);
-    throw new Error("Invalid user ID");
-  }
+export async function deletePost(postId: string, userId: string): Promise<boolean> {
+  if (!mongoose.Types.ObjectId.isValid(postId)) return false;
+  if (!mongoose.Types.ObjectId.isValid(userId)) throw new Error("Invalid user ID");
 
   await connectDB();
 
-  const userObjectId = new mongoose.Types.ObjectId(userId);
-  
-  // Delete only the post owned by this user
   const result = await Post.deleteOne({
     _id: postId,
-    author: userObjectId,
+    author: new mongoose.Types.ObjectId(userId),
   });
 
-  console.log("[DEBUG] deletePost - deletion result:", { deletedCount: result.deletedCount });
-
-  // Check if the post was deleted
-  if (result.deletedCount === 0) {
-    // Either the post doesn't exist or the user is not the owner
-    throw new Error("Unauthorized: You can only delete your own posts");
-  }
-
-  if (result.deletedCount === 1) {
-    console.log("[DEBUG] deletePost - post deleted successfully");
-    return true;
-  }
-
-  // Should not reach here, but handle unexpected cases
-  throw new Error("Unexpected error during post deletion");
+  return result.deletedCount > 0;
 }

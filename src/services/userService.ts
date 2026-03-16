@@ -1,4 +1,4 @@
-import { connectDB } from "@/lib/db";
+﻿import { connectDB } from "@/lib/db";
 import User, { IUser } from "@/models/User";
 import mongoose from "mongoose";
 
@@ -10,27 +10,37 @@ function generateUsername(prefix: string): string {
 
 export async function findOrCreateUserByWallet(
   walletAddress: string
-): Promise<{ user: IUser; isNewUser: boolean }> {  await connectDB();
+): Promise<{ user: IUser; isNewUser: boolean }> {
+  await connectDB();
   const addr = walletAddress.toLowerCase();
 
   let user = await User.findOne({ walletAddress: addr });
-isNewUser = true;
+  let isNewUser = false;
+
+  if (!user) {
+    const username = generateUsername(`user${addr.slice(2, 6)}`);
+    user = await User.create({
+      walletAddress: addr,
+      username,
+      authProvider: "wallet",
+    });
+    isNewUser = true;
   }
+
   return { user, isNewUser };
 }
 
 export async function findOrCreateUserByGoogleAccount(
-  googleId: string,  email: string,
+  googleId: string,
+  email: string,
   name?: string,
   image?: string
 ): Promise<IUser> {
   await connectDB();
   const lowerEmail = email.toLowerCase();
 
-const byGoogleId = await User.findOne({ googleId });
-  if (byGoogleId) {
-    return byGoogleId;
-  }
+  const byGoogleId = await User.findOne({ googleId });
+  if (byGoogleId) return byGoogleId;
 
   const existingByEmail = await User.findOne({ email: lowerEmail });
   if (existingByEmail) {
@@ -53,13 +63,21 @@ const byGoogleId = await User.findOne({ googleId });
     username,
     avatarUrl: image ?? "",
     authProvider: "google",
-  });}
+  });
+}
 
 export async function linkGoogleToUser(
   userId: string,
-const userObjectId = new mongoose.Types.ObjectId(userId);
+  googleId: string,
+  email: string,
+  avatarUrl?: string
+): Promise<IUser | null> {
+  await connectDB();
+  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
 
-  // Make sure this Google account isn't already linked to a different user.
+  const lowerEmail = email.toLowerCase();
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
   const googleConflict = await User.findOne({
     googleId,
     _id: { $ne: userObjectId },
@@ -68,18 +86,65 @@ const userObjectId = new mongoose.Types.ObjectId(userId);
     throw new Error("Google account already linked to another user");
   }
 
-  // Make sure this email isn't already taken by a different user.
-  const conflict = await User.findOne({
+  const emailConflict = await User.findOne({
     email: lowerEmail,
     _id: { $ne: userObjectId },
   });
-  if (conflict) {
+  if (emailConflict) {
     throw new Error("Email already linked to another account");
-  }  return User.findByIdAndUpdate(
+  }
+
+  return User.findByIdAndUpdate(
     userId,
     {
       $set: {
-if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+        googleId,
+        email: lowerEmail,
+        googleLinked: true,
+        ...(avatarUrl ? { avatarUrl } : {}),
+      },
+    },
+    { new: true }
+  );
+}
+
+export async function findUserByEmail(email: string): Promise<IUser | null> {
+  await connectDB();
+  return User.findOne({ email: email.toLowerCase() }).select("+passwordHash");
+}
+
+export async function createUserWithEmail(
+  email: string,
+  username: string,
+  passwordHash: string
+): Promise<IUser> {
+  await connectDB();
+  return User.create({
+    email: email.toLowerCase(),
+    username,
+    passwordHash,
+    authProvider: "email",
+  });
+}
+
+export async function getUserById(id: string): Promise<IUser | null> {
+  await connectDB();
+  if (!mongoose.Types.ObjectId.isValid(id)) return null;
+  return User.findById(id);
+}
+
+export async function getUserByWallet(walletAddress: string): Promise<IUser | null> {
+  await connectDB();
+  return User.findOne({ walletAddress: walletAddress.toLowerCase() });
+}
+
+export async function linkWalletToUser(
+  userId: string,
+  walletAddress: string
+): Promise<IUser | null> {
+  await connectDB();
+  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+
   const normalizedWalletAddress = walletAddress.toLowerCase();
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
@@ -93,8 +158,37 @@ if (!mongoose.Types.ObjectId.isValid(userId)) return null;
 
   return User.findByIdAndUpdate(
     userId,
-    { walletAddress: normalizedWalletAddress },    { new: true }
+    { walletAddress: normalizedWalletAddress },
+    { new: true }
   );
+}
+
+export async function linkEmailToUser(
+  userId: string,
+  email: string,
+  passwordHash: string
+): Promise<IUser | null> {
+  await connectDB();
+  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+
+  const lowerEmail = email.toLowerCase();
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  const emailConflict = await User.findOne({
+    email: lowerEmail,
+    _id: { $ne: userObjectId },
+  });
+  if (emailConflict) {
+    throw new Error("Email already linked to another account");
+  }
+
+  const user = await User.findById(userObjectId).select("+passwordHash");
+  if (!user) return null;
+
+  user.email = lowerEmail;
+  user.passwordHash = passwordHash;
+  await user.save();
+  return user;
 }
 
 export async function updateUser(
@@ -104,7 +198,6 @@ export async function updateUser(
   await connectDB();
   if (!mongoose.Types.ObjectId.isValid(userId)) return null;
 
-  // Check username uniqueness if changing
   if (updates.username) {
     const existing = await User.findOne({
       username: updates.username,
@@ -113,9 +206,5 @@ export async function updateUser(
     if (existing) throw new Error("Username already taken");
   }
 
-  return User.findByIdAndUpdate(
-    userId,
-    { $set: updates },
-    { new: true }
-  );
+  return User.findByIdAndUpdate(userId, { $set: updates }, { new: true });
 }
