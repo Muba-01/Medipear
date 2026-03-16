@@ -41,19 +41,11 @@ export default async function ExplorePage() {
             <Link
               key={c._id.toString()}
               href={`/p/${c.slug}`}
-<<<<<<< HEAD
-              className="flex items-center gap-4 p-4 rounded-xl border hover:border-purple-500/40 transition-all"
-              style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold text-white flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}>
-=======
               className="flex items-center gap-4 p-4 rounded-xl border theme-hover-surface transition-all"
               style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
               <div
                 className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold shrink-0"
                 style={{ background: "var(--brand-gradient)", color: "var(--text-on-accent)" }}>
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
                 {c.slug.slice(0, 2).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">

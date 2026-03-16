@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/getAuthUser";
 import { getCommentsByPost, createComment } from "@/services/commentService";
 import { CreateCommentSchema } from "@/lib/validations";
-<<<<<<< HEAD
-import { rewardsOracle } from "@/services/rewardsOracleService";
-=======
 >>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
 
 interface RouteContext {
@@ -60,7 +57,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
     
 =======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
     return NextResponse.json({ comment }, { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to create comment";

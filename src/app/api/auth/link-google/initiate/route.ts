@@ -11,11 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-<<<<<<< HEAD
-  if (user.authProvider === "google" || user.googleLinked) {
-=======
   if (user.googleId || user.googleLinked) {
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
     return NextResponse.json({ error: "Google account already linked" }, { status: 409 });
   }
 

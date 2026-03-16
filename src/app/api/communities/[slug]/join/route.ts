@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/getAuthUser";
 import { toggleJoinCommunity } from "@/services/communityService";
-<<<<<<< HEAD
-import { rewardsOracle } from "@/services/rewardsOracleService";
-=======
 >>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
 
 interface RouteContext {
@@ -28,7 +25,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
     
 =======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
     return NextResponse.json(result);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to join community";

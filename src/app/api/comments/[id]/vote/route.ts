@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/getAuthUser";
 import { voteComment } from "@/services/commentService";
 import { VoteSchema } from "@/lib/validations";
-<<<<<<< HEAD
-import { rewardsOracle } from "@/services/rewardsOracleService";
-import Comment from "@/models/Comment";
-import { connectDB } from "@/lib/db";
-=======
 >>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
 
 interface RouteContext {
@@ -60,7 +55,6 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     }
     
 =======
->>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
     return NextResponse.json(result);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to vote on comment";
