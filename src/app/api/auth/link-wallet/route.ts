@@ -3,7 +3,9 @@ import { verifyMessage } from "ethers";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { verifyJWT } from "@/lib/jwt";
-import { linkWalletToUser, getUserByWallet } from "@/services/userService";
+import { linkWalletToUser, getUserByWallet, getUserById } from "@/services/userService";
+import { connectDB } from "@/lib/db";
+import AuthNonce from "@/models/AuthNonce";
 
 /**
  * POST /api/auth/link-wallet
@@ -27,32 +29,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "signature is required" }, { status: 400 });
   }
 
-  const nonceCookie = req.cookies.get("mp_nonce")?.value;
-  if (!nonceCookie) {
+  const nonceId = req.cookies.get("mp_nonce_id")?.value;
+  if (!nonceId) {
     return NextResponse.json({ error: "Nonce expired or not found. Please try again." }, { status: 401 });
   }
 
-  let nonce = "";
   try {
-    const decoded = JSON.parse(Buffer.from(nonceCookie, "base64url").toString("utf8")) as {
-      address?: string;
-      nonce?: string;
-      exp?: number;
-    };
-
-    if (
-      decoded.address?.toLowerCase() !== address.toLowerCase() ||
-      !decoded.nonce ||
-      typeof decoded.exp !== "number" ||
-      Date.now() > decoded.exp
-    ) {
-      throw new Error("Invalid nonce challenge");
-    }
-
-    nonce = decoded.nonce;
+    await connectDB();
   } catch {
+    return NextResponse.json({ error: "Authentication service unavailable" }, { status: 503 });
+  }
+
+  const nonceDoc = await AuthNonce.findOne({
+    _id: nonceId,
+    address: address.toLowerCase(),
+    usedAt: null,
+    expiresAt: { $gt: new Date() },
+  });
+  if (!nonceDoc) {
     return NextResponse.json({ error: "Nonce expired or not found. Please try again." }, { status: 401 });
   }
+
+  const nonce = nonceDoc.nonce;
 
   const message = `Sign this message to authenticate with Medipear.\n\nNonce: ${nonce}`;
 
@@ -67,12 +65,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Signature mismatch" }, { status: 401 });
   }
 
-  // Check wallet not already taken by another user
-  const existing = await getUserByWallet(address);
-  if (existing) {
-    return NextResponse.json({ error: "Wallet already linked to another account" }, { status: 409 });
+  const consumed = await AuthNonce.findOneAndUpdate(
+    {
+      _id: nonceDoc._id,
+      usedAt: null,
+      expiresAt: { $gt: new Date() },
+    },
+    { $set: { usedAt: new Date() } },
+    { new: true }
+  );
+  if (!consumed) {
+    return NextResponse.json({ error: "Nonce already used. Please try again." }, { status: 409 });
   }
 
+  // Check wallet not already taken by another user
   // Resolve current user from either a wallet JWT or a NextAuth Google session
   let userId: string | null = null;
 
@@ -93,10 +99,33 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const updated = await linkWalletToUser(userId, address);
-  if (!updated) {
+  const currentUser = await getUserById(userId);
+  if (!currentUser) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
+
+  const normalizedAddress = address.toLowerCase();
+  if (currentUser.walletAddress?.toLowerCase() === normalizedAddress) {
+    return NextResponse.json({
+      walletAddress: currentUser.walletAddress,
+      username: currentUser.username,
+      userId: currentUser._id.toString(),
+    });
+  }
+
+  const existing = await getUserByWallet(normalizedAddress);
+  if (existing && existing._id.toString() !== currentUser._id.toString()) {
+    return NextResponse.json({ error: "Wallet already linked to another account" }, { status: 409 });
+  }
+
+  let updated = null;
+  try {
+    updated = await linkWalletToUser(userId, normalizedAddress);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to link wallet";
+    return NextResponse.json({ error: message }, { status: 409 });
+  }
+  if (!updated) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   const res = NextResponse.json({
     walletAddress: updated.walletAddress,
@@ -104,7 +133,7 @@ export async function POST(req: NextRequest) {
     userId: updated._id.toString(),
   });
 
-  res.cookies.set("mp_nonce", "", {
+  res.cookies.set("mp_nonce_id", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

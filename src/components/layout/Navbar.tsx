@@ -3,17 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Zap, Bell, Menu, X, LogOut, User, Plus } from "lucide-react";
+import { Search, Zap, Bell, Menu, X, LogOut, User, Plus, Sun, Moon, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { shortenAddress } from "@/lib/utils";
 import Image from "next/image";
 import CreateCommunityModal from "@/components/community/CreateCommunityModal";
 import AuthModal from "@/components/layout/AuthModal";
-import { Users } from "lucide-react";
 
 export default function Navbar() {
   const router = useRouter();
-  const { isAuthenticated, isLoading, walletAddress, userId, username, avatarUrl, provider, login, logout, error } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, isLoading, walletAddress, userId, username, avatarUrl, provider, login, logout, error, walletNeedsVerification, walletNotice, dismissWalletNotice } = useAuth();
   const displayName = username ?? (walletAddress ? shortenAddress(walletAddress) : null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState("");
@@ -94,7 +95,7 @@ export default function Navbar() {
       style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
       <div className="h-full max-w-7xl mx-auto px-4 flex items-center gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+        <Link href="/" className="flex items-center gap-2 shrink-0">
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center relative"
             style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}>
@@ -217,6 +218,15 @@ export default function Navbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="w-8 h-8 flex items-center justify-center rounded-lg border hover:bg-white/5 transition-colors"
+            style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+
           {isAuthenticated && (
             <Link
               href="/create"
@@ -347,6 +357,31 @@ export default function Navbar() {
         </div>
       )}
 
+      {walletNeedsVerification && walletNotice && (
+        <div
+          className="absolute top-14 left-1/2 -translate-x-1/2 mt-2 w-[min(92vw,560px)] rounded-lg border px-4 py-3 shadow-xl z-50"
+          style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-3">
+            <p className="text-sm flex-1" style={{ color: "var(--foreground)" }}>
+              {walletNotice}
+            </p>
+            <button
+              onClick={handleLogin}
+              disabled={loginPending}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-60"
+              style={{ background: "var(--brand-gradient)", color: "var(--text-on-accent)" }}>
+              {loginPending ? "Verifying..." : "Verify Wallet"}
+            </button>
+            <button
+              onClick={dismissWalletNotice}
+              className="px-2 py-1 rounded text-xs theme-hover-surface"
+              style={{ color: "var(--muted)" }}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div
@@ -370,6 +405,12 @@ export default function Navbar() {
             />
           </div>
           <nav className="flex flex-col gap-1">
+            <button
+              onClick={toggleTheme}
+              className="px-3 py-2 rounded-lg text-sm hover:bg-white/5 transition-colors text-left"
+              style={{ color: "var(--foreground)" }}>
+              {theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            </button>
             {[
               { href: "/", label: "Home" },
               { href: "/explore", label: "Explore" },

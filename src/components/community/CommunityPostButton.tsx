@@ -11,7 +11,7 @@ export default function CommunityPostButton({ slug }: { slug: string }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border hover:bg-white/5 transition-all"
+        className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border theme-hover-surface transition-all"
         style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
       >
         <Plus size={14} />

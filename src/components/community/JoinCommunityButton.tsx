@@ -57,15 +57,15 @@ export default function JoinCommunityButton({ slug, initialJoined = false, initi
         className={cn(
           "px-5 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95",
           joined
-            ? "hover:bg-white/5 border"
-            : "text-white hover:opacity-90",
+            ? "theme-hover-surface border"
+            : "hover:opacity-90",
           loading && "opacity-60 cursor-not-allowed",
           !isAuthenticated && "opacity-60 cursor-not-allowed"
         )}
         style={
           joined
             ? { borderColor: "var(--border)", color: "var(--foreground)" }
-            : { background: "var(--accent)" }
+            : { background: "var(--accent)", color: "var(--text-on-accent)" }
         }
         title={!isAuthenticated ? "Sign in to join" : undefined}
       >

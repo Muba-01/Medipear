@@ -114,8 +114,10 @@ const POPULATE_COMMUNITY = "name slug description membersCount iconUrl bannerUrl
 
 export type GetPostsFilter = {
   communitySlug?: string;
+  communityIds?: string[];
   authorWallet?: string;
   authorId?: string;
+  interests?: string[];
   sort?: "hot" | "new" | "top" | "rising";
   limit?: number;
   page?: number;
@@ -139,6 +141,15 @@ export async function getPosts(
     query.community = comm._id;
   }
 
+  if (filter.communityIds && filter.communityIds.length > 0) {
+    const validCommunityIds = filter.communityIds
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+    if (validCommunityIds.length > 0) {
+      query.community = { $in: validCommunityIds };
+    }
+  }
+
   if (filter.authorId && mongoose.Types.ObjectId.isValid(filter.authorId)) {
     query.author = new mongoose.Types.ObjectId(filter.authorId);
   } else if (filter.authorWallet) {
@@ -153,6 +164,19 @@ export async function getPosts(
   if (filter.search && filter.search.trim()) {
     const regex = new RegExp(filter.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
     query.$or = [{ title: regex }, { content: regex }];
+  }
+
+  if (filter.interests && filter.interests.length > 0 && !filter.search) {
+    const interestRegexes = filter.interests.map((interest) =>
+      new RegExp(interest.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
+    );
+
+    const interestFilters: Record<string, unknown>[] = [];
+    for (const regex of interestRegexes) {
+      interestFilters.push({ title: regex }, { content: regex }, { tags: regex });
+    }
+
+    query.$or = [...(Array.isArray(query.$or) ? query.$or : []), ...interestFilters];
   }
 
   const sortMap: Record<string, Record<string, number>> = {

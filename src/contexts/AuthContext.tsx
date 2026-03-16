@@ -15,13 +15,23 @@ interface AuthState {
   walletAddress: string | null;
   userId: string | null;
   username: string | null;
+  displayName: string | null;
   avatarUrl: string | null;
   email: string | null;
+  birthday: string | null;
+  interests: string[];
+  joinedCommunities: string[];
+  onboardingCompleted: boolean | null;
+  onboardingStep: number;
   karma: number;
   provider: "wallet" | "google" | "email" | null;
   walletLinked: boolean;
   googleLinked: boolean;
   emailLinked: boolean;
+  needsGoogleLink: boolean;
+  needsWalletLink: boolean;
+  walletNeedsVerification: boolean;
+  walletNotice: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -31,8 +41,10 @@ interface AuthContextValue extends AuthState {
   login: () => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (email: string, password: string) => Promise<void>;
+  linkEmail: (email: string, password: string) => Promise<void>;
   linkWallet: () => Promise<void>;
   linkGoogle: () => Promise<void>;
+  dismissWalletNotice: () => void;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -41,13 +53,23 @@ const EMPTY: AuthState = {
   walletAddress: null,
   userId: null,
   username: null,
+  displayName: null,
   avatarUrl: null,
   email: null,
+  birthday: null,
+  interests: [],
+  joinedCommunities: [],
+  onboardingCompleted: null,
+  onboardingStep: 1,
   karma: 0,
   provider: null,
   walletLinked: false,
   googleLinked: false,
   emailLinked: false,
+  needsGoogleLink: false,
+  needsWalletLink: false,
+  walletNeedsVerification: false,
+  walletNotice: null,
   isAuthenticated: false,
   isLoading: false,
   error: null,
@@ -82,6 +104,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setError = (error: string | null) =>
     setState((s) => ({ ...s, error, isLoading: false }));
 
+  const invalidateWalletSession = useCallback(async (nextWalletAddress: string | null, notice: string) => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setState({
+      ...EMPTY,
+      walletAddress: nextWalletAddress,
+      walletNeedsVerification: !!nextWalletAddress,
+      walletNotice: notice,
+    });
+  }, []);
+
   // Restore session on mount (handles wallet JWT cookie)
   useEffect(() => {
     (async () => {
@@ -100,29 +132,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               providerWalletAddress === sessionWalletAddress,
           });
 
+          if (
+            data.provider === "wallet" &&
+            sessionWalletAddress &&
+            providerWalletAddress &&
+            providerWalletAddress !== sessionWalletAddress
+          ) {
+            await invalidateWalletSession(
+              providerWalletAddress,
+              "Wallet account changed. Please verify ownership to continue."
+            );
+            return;
+          }
+
           setState({
             walletAddress: sessionWalletAddress,
             userId: data.userId ?? null,
             username: data.username ?? null,
+            displayName: data.displayName ?? data.username ?? null,
             avatarUrl: data.avatarUrl ?? null,
             email: data.email ?? null,
+            birthday: data.birthday ?? null,
+            interests: data.interests ?? [],
+            joinedCommunities: data.joinedCommunities ?? [],
+            onboardingCompleted: typeof data.onboardingCompleted === "boolean" ? data.onboardingCompleted : null,
+            onboardingStep: data.onboardingStep ?? 1,
             karma: data.karma ?? 0,
             provider: data.provider ?? null,
             walletLinked: data.walletLinked ?? !!data.walletAddress,
             googleLinked: data.googleLinked ?? false,
             emailLinked: data.emailLinked ?? false,
+            needsGoogleLink: data.needsGoogleLink ?? false,
+            needsWalletLink: data.needsWalletLink ?? false,
+            walletNeedsVerification: false,
+            walletNotice: null,
             isAuthenticated: true,
             isLoading: false,
             error: null,
           });
         } else {
-          setState({ ...EMPTY });
+          setState({ ...EMPTY, walletAddress: providerWalletAddress });
         }
       } catch {
         setState({ ...EMPTY });
       }
     })();
-  }, []);
+  }, [invalidateWalletSession]);
 
   // Sync Google OAuth session from next-auth into app state
   useEffect(() => {
@@ -136,13 +191,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           walletAddress: (u as { walletAddress?: string | null }).walletAddress ?? null,
           userId: (u as { id?: string }).id ?? null,
           username: (u as { username?: string }).username ?? u.name ?? null,
+          displayName: u.name ?? (u as { username?: string }).username ?? null,
           avatarUrl: u.image ?? null,
           email: (u as { email?: string | null }).email ?? null,
+          birthday: null,
+          interests: [],
+          joinedCommunities: [],
+          onboardingCompleted: null,
+          onboardingStep: 1,
           karma: 0,
           provider: "google" as const,
           walletLinked: !!((u as { walletAddress?: string | null }).walletAddress),
           googleLinked: true,
-          emailLinked: false,
+          emailLinked: !!(u as { email?: string | null }).email,
+          needsGoogleLink: false,
+          needsWalletLink: !((u as { walletAddress?: string | null }).walletAddress),
+          walletNeedsVerification: false,
+          walletNotice: null,
           isAuthenticated: true,
           isLoading: false,
           error: null,
@@ -207,13 +272,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         walletAddress: sessionWalletAddress ?? address,
         userId: data.userId ?? null,
         username: data.username ?? null,
+        displayName: data.displayName ?? data.username ?? null,
         avatarUrl: null,
         email: null,
+        birthday: null,
+        interests: [],
+        joinedCommunities: [],
+        onboardingCompleted: typeof data.onboardingCompleted === "boolean" ? data.onboardingCompleted : null,
+        onboardingStep: data.onboardingStep ?? 1,
         karma: 0,
         provider: "wallet",
         walletLinked: true,
-        googleLinked: false,
-        emailLinked: false,
+        googleLinked: data.googleLinked ?? false,
+        emailLinked: data.emailLinked ?? false,
+        needsGoogleLink: data.needsGoogleLink ?? !(data.googleLinked ?? false),
+        needsWalletLink: false,
+        walletNeedsVerification: false,
+        walletNotice: null,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -228,6 +303,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signOut({ redirect: false });
     console.info("[wallet-auth] cleared wallet auth session");
     setState({ ...EMPTY });
+  }, []);
+
+  const dismissWalletNotice = useCallback(() => {
+    setState((prev) => ({ ...prev, walletNotice: null }));
   }, []);
 
   useEffect(() => {
@@ -251,17 +330,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setState((prev) => {
         if (!prev.isAuthenticated || prev.provider === "wallet") {
-          return { ...prev, walletAddress: providerWalletAddress };
+          return { ...prev, walletAddress: providerWalletAddress, walletNeedsVerification: false };
         }
         return prev;
       });
+
+      if (current.isAuthenticated && current.provider === "wallet" && !providerWalletAddress) {
+        void invalidateWalletSession(null, "Wallet disconnected. Please reconnect to continue.");
+        return;
+      }
 
       if (
         current.isAuthenticated &&
         current.provider === "wallet" &&
         (!providerWalletAddress || (sessionWalletAddress && providerWalletAddress !== sessionWalletAddress))
       ) {
-        void logout();
+        void invalidateWalletSession(
+          providerWalletAddress,
+          "Wallet account changed. Please verify ownership to continue."
+        );
       }
     };
 
@@ -287,20 +374,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             return prev;
           });
+
+          if (
+            current.isAuthenticated &&
+            current.provider === "wallet" &&
+            providerWalletAddress &&
+            sessionWalletAddress &&
+            providerWalletAddress !== sessionWalletAddress
+          ) {
+            void invalidateWalletSession(
+              providerWalletAddress,
+              "Network changed. Please verify wallet ownership to continue."
+            );
+          }
         })
         .catch((err: unknown) => {
           console.warn("[wallet-auth] failed to sync wallet after chain change", err);
         });
     };
 
+    const handleDisconnect = () => {
+      const current = stateRef.current;
+      if (current.isAuthenticated && current.provider === "wallet") {
+        void invalidateWalletSession(null, "Wallet disconnected. Please reconnect to continue.");
+      } else {
+        setState((prev) => ({ ...prev, walletAddress: null }));
+      }
+    };
+
     window.ethereum.on("accountsChanged", handleAccountsChanged);
     window.ethereum.on("chainChanged", handleChainChanged);
+    window.ethereum.on("disconnect", handleDisconnect);
 
     return () => {
       window.ethereum?.removeListener("accountsChanged", handleAccountsChanged);
       window.ethereum?.removeListener("chainChanged", handleChainChanged);
+      window.ethereum?.removeListener("disconnect", handleDisconnect);
     };
-  }, [logout]);
+  }, [invalidateWalletSession]);
 
   const refreshProfile = useCallback(async () => {
     try {
@@ -316,12 +427,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setState((prev) => ({
           ...prev,
           username: data.username ?? prev.username,
+          displayName: data.displayName ?? data.username ?? prev.displayName,
           avatarUrl: 'avatarUrl' in data ? data.avatarUrl : prev.avatarUrl,
           email: data.email ?? prev.email,
+          birthday: 'birthday' in data ? data.birthday : prev.birthday,
+          interests: data.interests ?? prev.interests,
+          joinedCommunities: data.joinedCommunities ?? prev.joinedCommunities,
+          onboardingCompleted: typeof data.onboardingCompleted === "boolean" ? data.onboardingCompleted : prev.onboardingCompleted,
+          onboardingStep: data.onboardingStep ?? prev.onboardingStep,
           walletAddress: "walletAddress" in data ? sessionWalletAddress : prev.walletAddress,
           walletLinked: data.walletLinked ?? prev.walletLinked,
           googleLinked: data.googleLinked ?? prev.googleLinked,
           emailLinked: data.emailLinked ?? prev.emailLinked,
+          needsGoogleLink: data.needsGoogleLink ?? prev.needsGoogleLink,
+          needsWalletLink: data.needsWalletLink ?? prev.needsWalletLink,
+          walletNeedsVerification: false,
+          walletNotice: null,
         }));
       }
     } catch { /* silent */ }
@@ -368,6 +489,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signIn("google", { callbackUrl: window.location.href });
   }, []);
 
+  const linkEmail = useCallback(async (email: string, password: string) => {
+    const res = await fetch("/api/auth/link-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error ?? "Failed to link email.");
+    }
+    await refreshProfile();
+  }, [refreshProfile]);
+
   const loginWithGoogle = useCallback(async () => {
     await signIn("google", { callbackUrl: window.location.href });
   }, []);
@@ -391,13 +525,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         walletAddress: data.walletAddress ?? null,
         userId: data.userId ?? null,
         username: data.username ?? null,
+        displayName: data.displayName ?? data.username ?? null,
         avatarUrl: data.avatarUrl ?? null,
         email: data.email ?? null,
+        birthday: data.birthday ?? null,
+        interests: data.interests ?? [],
+        joinedCommunities: data.joinedCommunities ?? [],
+        onboardingCompleted: typeof data.onboardingCompleted === "boolean" ? data.onboardingCompleted : null,
+        onboardingStep: data.onboardingStep ?? 1,
         karma: data.karma ?? 0,
         provider: data.provider ?? "email",
         walletLinked: data.walletLinked ?? false,
         googleLinked: data.googleLinked ?? false,
         emailLinked: data.emailLinked ?? true,
+        needsGoogleLink: data.needsGoogleLink ?? false,
+        needsWalletLink: data.needsWalletLink ?? false,
+        walletNeedsVerification: false,
+        walletNotice: null,
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -408,7 +552,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, loginWithGoogle, loginWithEmail, linkWallet, linkGoogle, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ ...state, login, loginWithGoogle, loginWithEmail, linkEmail, linkWallet, linkGoogle, dismissWalletNotice, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

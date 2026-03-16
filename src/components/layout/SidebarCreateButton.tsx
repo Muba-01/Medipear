@@ -9,7 +9,7 @@ export default function SidebarCreateButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="hover:text-purple-400 transition-colors text-left"
+        className="theme-hover-accent transition-colors text-left"
         style={{ color: "var(--muted)", fontSize: "0.75rem" }}>
         Create a post →
       </button>

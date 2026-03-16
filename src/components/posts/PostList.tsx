@@ -57,11 +57,11 @@ export default function PostList({ posts: initialPosts, showSortBar = true }: Po
               onClick={() => handleSort(key)}
               className={cn(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
-                sortBy === key ? "text-white" : "hover:bg-white/5"
+                sortBy === key ? "" : "theme-hover-surface"
               )}
               style={{
                 background: sortBy === key ? "var(--accent)" : "transparent",
-                color: sortBy === key ? "#fff" : "var(--muted)",
+                color: sortBy === key ? "var(--text-on-accent)" : "var(--muted)",
               }}>
               <Icon size={13} />
               {label}

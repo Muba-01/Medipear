@@ -30,16 +30,16 @@ export default function CreatePage() {
         </div>
 
         {/* ── Right column: posting guidelines ─────────────────── */}
-        <aside className="hidden lg:flex flex-col gap-4 w-80 flex-shrink-0">
+        <aside className="hidden lg:flex flex-col gap-4 w-80 shrink-0">
           {/* Guidelines card */}
           <div
             className="rounded-xl border overflow-hidden"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
             <div
               className="px-4 py-3 border-b flex items-center gap-2"
-              style={{ borderColor: "var(--border)", background: "linear-gradient(135deg, #3b1f6e 0%, #1e3a8a 60%, #0f172a 100%)" }}>
-              <Zap size={14} className="text-white" />
-              <span className="text-sm font-semibold text-white">Posting to Medipear</span>
+              style={{ borderColor: "var(--border)", background: "var(--hero-gradient)" }}>
+              <Zap size={14} style={{ color: "var(--text-on-banner)" }} />
+              <span className="text-sm font-semibold" style={{ color: "var(--text-on-banner)" }}>Posting to Medipear</span>
             </div>
             <div className="divide-y" style={{ borderColor: "var(--border)" }}>
               {[
@@ -51,8 +51,8 @@ export default function CreatePage() {
               ].map(({ n, text }) => (
                 <div key={n} className="flex gap-3 px-4 py-3">
                   <span
-                    className="text-xs font-bold mt-0.5 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ background: "var(--accent)", color: "#fff", fontSize: "10px" }}>
+                    className="text-xs font-bold mt-0.5 shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ background: "var(--accent)", color: "var(--text-on-accent)", fontSize: "10px" }}>
                     {n}
                   </span>
                   <p className="text-xs leading-relaxed" style={{ color: "var(--muted)" }}>
@@ -89,7 +89,7 @@ export default function CreatePage() {
               { Icon: Zap, tip: "Include context — help readers understand your post quickly." },
             ].map(({ Icon, tip }, i) => (
               <div key={i} className="flex gap-2.5">
-                <Icon size={13} className="flex-shrink-0 mt-0.5" style={{ color: "var(--muted)" }} />
+                <Icon size={13} className="shrink-0 mt-0.5" style={{ color: "var(--muted)" }} />
                 <p className="text-xs leading-relaxed" style={{ color: "var(--muted)" }}>{tip}</p>
               </div>
             ))}
