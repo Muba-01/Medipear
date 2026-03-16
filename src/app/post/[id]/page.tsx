@@ -66,8 +66,17 @@ export default async function PostPage({ params }: PageProps) {
             className="rounded-xl border p-5"
             style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
             <p className="text-sm mb-3 flex items-center gap-2" style={{ color: "var(--muted)" }}>
-              Trust Score: {(post.trustScore * 100).toFixed(0)}/100
-              <InfoTooltip   text={"Trust Score shows how reliable a medical post may be.\nIt combines machine learning analysis with checks for references, PubMed links, and citation recency."} />
+              Trust Score:{" "}
+              <span style={{ color: post.trustScore >= 0.75 ? "#22c55e" : "#ef4444", fontWeight: 600 }}>
+                {(post.trustScore * 100).toFixed(0)}/100
+              </span>
+              <InfoTooltip
+                text={
+                  "Trust Score shows how reliable a medical post may be.\n" +
+                  "It combines machine learning analysis with checks for references, PubMed links, and citation recency.\n" +
+                  "Higher trust scores (≥ 75) appear in green, while lower scores appear in red."
+                }
+              />
             </p>
             <h2 className="text-base font-semibold mb-3" style={{ color: "var(--foreground)" }}>
               {post.title}
