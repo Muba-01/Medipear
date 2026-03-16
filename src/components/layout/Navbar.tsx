@@ -5,17 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Zap, Bell, Menu, X, LogOut, User, Plus, Sun, Moon, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/contexts/ThemeContext";
-import { shortenAddress } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";import { shortenAddress } from "@/lib/utils";
 import Image from "next/image";
 import CreateCommunityModal from "@/components/community/CreateCommunityModal";
 import AuthModal from "@/components/layout/AuthModal";
-
 export default function Navbar() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-  const { isAuthenticated, isLoading, walletAddress, userId, username, avatarUrl, provider, login, logout, error, walletNeedsVerification, walletNotice, dismissWalletNotice } = useAuth();
-  const displayName = username ?? (walletAddress ? shortenAddress(walletAddress) : null);
+  const { isAuthenticated, isLoading, walletAddress, userId, username, avatarUrl, provider, login, logout, error, walletNeedsVerification, walletNotice, dismissWalletNotice } = useAuth();  const displayName = username ?? (walletAddress ? shortenAddress(walletAddress) : null);
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -95,8 +92,7 @@ export default function Navbar() {
       style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
       <div className="h-full max-w-7xl mx-auto px-4 flex items-center gap-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div
+<Link href="/" className="flex items-center gap-2 shrink-0">          <div
             className="w-7 h-7 rounded-lg flex items-center justify-center relative"
             style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}>
             <img
@@ -218,7 +214,7 @@ export default function Navbar() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-      {walletNeedsVerification && walletNotice && (
+{walletNeedsVerification && walletNotice && (
         <div
           className="absolute top-14 left-1/2 -translate-x-1/2 mt-2 w-[min(92vw,560px)] rounded-lg border px-4 py-3 shadow-xl z-50"
           style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
@@ -241,9 +237,7 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Mobile menu */}
+      )}      {/* Mobile menu */}
       {mobileMenuOpen && (
         <div
           className="md:hidden px-4 py-3 border-t"

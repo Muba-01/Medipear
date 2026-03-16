@@ -2,12 +2,8 @@ import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import Post from "@/models/Post";
 import Community from "@/models/Community";
-import User from "@/models/User";
 import { CreatePostInput } from "@/lib/validations";
 import { Post as PostFE, User as UserFE, Community as CommunityFE } from "@/lib/types";
-import { trustScoreService } from "@/services/trustScoreService";
-import { rewardEligibilityService } from "@/services/rewardEligibilityService";
-
 type PopulatedAuthor = {
   _id: mongoose.Types.ObjectId;
   username: string;
@@ -117,11 +113,10 @@ const POPULATE_COMMUNITY = "name slug description membersCount iconUrl bannerUrl
 
 export type GetPostsFilter = {
   communitySlug?: string;
-  communityIds?: string[];
+communityIds?: string[];
   authorWallet?: string;
   authorId?: string;
-  interests?: string[];
-  sort?: "hot" | "new" | "top" | "rising";
+  interests?: string[];  sort?: "hot" | "new" | "top" | "rising";
   limit?: number;
   page?: number;
   search?: string;
@@ -144,7 +139,7 @@ export async function getPosts(
     query.community = comm._id;
   }
 
-  if (filter.interests && filter.interests.length > 0 && !filter.search) {
+if (filter.interests && filter.interests.length > 0 && !filter.search) {
     const interestRegexes = filter.interests.map((interest) =>
       new RegExp(interest.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")
     );
@@ -155,9 +150,7 @@ export async function getPosts(
     }
 
     query.$or = [...(Array.isArray(query.$or) ? query.$or : []), ...interestFilters];
-  }
-
-  const sortMap: Record<string, Record<string, number>> = {
+  }  const sortMap: Record<string, Record<string, number>> = {
     new: { createdAt: -1 },
     top: { score: -1, createdAt: -1 },
     hot: { score: -1, createdAt: -1 },
@@ -199,12 +192,11 @@ export async function getPostById(
   return serialized;
 }
 
-  // Get trust score from ML service
+// Get trust score from ML service
   const textToScore = input.content || input.title;
   console.log("[DEBUG] Text to score:", textToScore);
   const trustScore = await getTrustScore(textToScore);
   console.log("[DEBUG] Trust score from AI service:", trustScore);
-
   const created = await Post.create({
     title: input.title,
     content: input.content,
@@ -214,17 +206,15 @@ export async function getPostById(
     tags: input.tags ?? [],
     imageUrl: input.imageUrl || undefined,
     linkUrl: input.linkUrl || undefined,
-    trustScore,
+trustScore,
   });
   console.log("[DEBUG] Post created with trustScore:", created.trustScore);
-
   const populated = await Post.findById(created._id)
     .populate<{ author: PopulatedAuthor }>("author", POPULATE_AUTHOR)
     .populate<{ community: PopulatedCommunity }>("community", POPULATE_COMMUNITY)
     .lean();
 
-  console.log("[DEBUG] Post fetched from DB with trustScore:", populated?.trustScore);
-  return serializePost(populated as unknown as LeanPost, authorId);
+console.log("[DEBUG] Post fetched from DB with trustScore:", populated?.trustScore);  return serializePost(populated as unknown as LeanPost, authorId);
 }
 
 export async function votePost(
@@ -309,15 +299,13 @@ export async function updatePost(
   // Determine if content or title changed
   const contentChanged = originalPost.content !== updates.content || originalPost.title !== updates.title;
   
-  // Recalculate trustScore if content changed
-  let trustScoreUpdate = {};
+// Recalculate trustScore if content changed  let trustScoreUpdate = {};
   if (contentChanged) {
     const textToScore = updates.content || updates.title;
     console.log("[DEBUG] updatePost - content changed, recalculating trustScore for text:", textToScore);
-    const newTrustScore = await getTrustScore(textToScore);
+const newTrustScore = await getTrustScore(textToScore);
     console.log("[DEBUG] updatePost - new trustScore calculated:", newTrustScore);
-    trustScoreUpdate = { trustScore: newTrustScore };
-  }
+    trustScoreUpdate = { trustScore: newTrustScore };  }
 
   // Update only the post owned by this user
   const result = await Post.findOneAndUpdate(

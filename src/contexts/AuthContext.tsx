@@ -15,24 +15,22 @@ interface AuthState {
   walletAddress: string | null;
   userId: string | null;
   username: string | null;
-  displayName: string | null;
+displayName: string | null;
   avatarUrl: string | null;
   email: string | null;
   birthday: string | null;
   interests: string[];
   joinedCommunities: string[];
   onboardingCompleted: boolean | null;
-  onboardingStep: number;
-  karma: number;
+  onboardingStep: number;  karma: number;
   provider: "wallet" | "google" | "email" | null;
   walletLinked: boolean;
   googleLinked: boolean;
   emailLinked: boolean;
-  linkEmail: (email: string, password: string) => Promise<void>;
+linkEmail: (email: string, password: string) => Promise<void>;
   linkWallet: () => Promise<void>;
   linkGoogle: () => Promise<void>;
-  dismissWalletNotice: () => void;
-  logout: () => Promise<void>;
+  dismissWalletNotice: () => void;  logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -40,20 +38,19 @@ const EMPTY: AuthState = {
   walletAddress: null,
   userId: null,
   username: null,
-  displayName: null,
+displayName: null,
   avatarUrl: null,
   email: null,
   birthday: null,
   interests: [],
   joinedCommunities: [],
   onboardingCompleted: null,
-  onboardingStep: 1,
-  karma: 0,
+  onboardingStep: 1,  karma: 0,
   provider: null,
   walletLinked: false,
   googleLinked: false,
   emailLinked: false,
-  const invalidateWalletSession = useCallback(async (nextWalletAddress: string | null, notice: string) => {
+const invalidateWalletSession = useCallback(async (nextWalletAddress: string | null, notice: string) => {
     await fetch("/api/auth/logout", { method: "POST" });
     setState({
       ...EMPTY,
@@ -61,9 +58,7 @@ const EMPTY: AuthState = {
       walletNeedsVerification: !!nextWalletAddress,
       walletNotice: notice,
     });
-  }, []);
-
-  // Restore session on mount (handles wallet JWT cookie)
+  }, []);  // Restore session on mount (handles wallet JWT cookie)
   useEffect(() => {
     (async () => {
       try {
@@ -81,27 +76,24 @@ const EMPTY: AuthState = {
               providerWalletAddress === sessionWalletAddress,
           });
 
-            displayName: data.displayName ?? data.username ?? null,
+displayName: data.displayName ?? data.username ?? null,
             avatarUrl: data.avatarUrl ?? null,
             email: data.email ?? null,
             birthday: data.birthday ?? null,
             interests: data.interests ?? [],
             joinedCommunities: data.joinedCommunities ?? [],
             onboardingCompleted: typeof data.onboardingCompleted === "boolean" ? data.onboardingCompleted : null,
-            onboardingStep: data.onboardingStep ?? 1,
-            karma: data.karma ?? 0,
+            onboardingStep: data.onboardingStep ?? 1,            karma: data.karma ?? 0,
             provider: data.provider ?? null,
             walletLinked: data.walletLinked ?? !!data.walletAddress,
             googleLinked: data.googleLinked ?? false,
             emailLinked: data.emailLinked ?? false,
-          setState({ ...EMPTY, walletAddress: providerWalletAddress });
-        }
+setState({ ...EMPTY, walletAddress: providerWalletAddress });        }
       } catch {
         setState({ ...EMPTY });
       }
     })();
-  }, [invalidateWalletSession]);
-
+}, [invalidateWalletSession]);
   // Sync Google OAuth session from next-auth into app state
   useEffect(() => {
     if (sessionStatus === "loading") return;
@@ -114,24 +106,22 @@ const EMPTY: AuthState = {
           walletAddress: (u as { walletAddress?: string | null }).walletAddress ?? null,
           userId: (u as { id?: string }).id ?? null,
           username: (u as { username?: string }).username ?? u.name ?? null,
-          displayName: u.name ?? (u as { username?: string }).username ?? null,
+displayName: u.name ?? (u as { username?: string }).username ?? null,
           avatarUrl: u.image ?? null,
           email: (u as { email?: string | null }).email ?? null,
           birthday: null,
           interests: [],
           joinedCommunities: [],
           onboardingCompleted: null,
-          onboardingStep: 1,
-          karma: 0,
+          onboardingStep: 1,          karma: 0,
           provider: "google" as const,
           walletLinked: !!((u as { walletAddress?: string | null }).walletAddress),
           googleLinked: true,
-          emailLinked: !!(u as { email?: string | null }).email,
+emailLinked: !!(u as { email?: string | null }).email,
           needsGoogleLink: false,
           needsWalletLink: !((u as { walletAddress?: string | null }).walletAddress),
           walletNeedsVerification: false,
-          walletNotice: null,
-          isAuthenticated: true,
+          walletNotice: null,          isAuthenticated: true,
           isLoading: false,
           error: null,
         };
@@ -195,7 +185,7 @@ const EMPTY: AuthState = {
         walletAddress: sessionWalletAddress ?? address,
         userId: data.userId ?? null,
         username: data.username ?? null,
-        displayName: data.displayName ?? data.username ?? null,
+displayName: data.displayName ?? data.username ?? null,
         avatarUrl: null,
         email: null,
         birthday: null,
@@ -211,8 +201,7 @@ const EMPTY: AuthState = {
         needsGoogleLink: data.needsGoogleLink ?? !(data.googleLinked ?? false),
         needsWalletLink: false,
         walletNeedsVerification: false,
-        walletNotice: null,
-        isAuthenticated: true,
+        walletNotice: null,        isAuthenticated: true,
         isLoading: false,
         error: null,
       });
@@ -228,16 +217,14 @@ const EMPTY: AuthState = {
     setState({ ...EMPTY });
   }, []);
 
-          return { ...prev, walletAddress: providerWalletAddress, walletNeedsVerification: false };
-        }
+return { ...prev, walletAddress: providerWalletAddress, walletNeedsVerification: false };        }
         return prev;
       });
 
-        void invalidateWalletSession(
+void invalidateWalletSession(
           providerWalletAddress,
           "Wallet account changed. Please verify ownership to continue."
-        );
-      }
+        );      }
     };
 
     const handleChainChanged = (_chainId: unknown) => {
@@ -262,7 +249,7 @@ const EMPTY: AuthState = {
             }
             return prev;
           });
-    const handleDisconnect = () => {
+const handleDisconnect = () => {
       const current = stateRef.current;
       if (current.isAuthenticated && current.provider === "wallet") {
         void invalidateWalletSession(null, "Wallet disconnected. Please reconnect to continue.");
@@ -274,14 +261,12 @@ const EMPTY: AuthState = {
     window.ethereum.on("accountsChanged", handleAccountsChanged);
     window.ethereum.on("chainChanged", handleChainChanged);
     window.ethereum.on("disconnect", handleDisconnect);
-
     return () => {
       window.ethereum?.removeListener("accountsChanged", handleAccountsChanged);
       window.ethereum?.removeListener("chainChanged", handleChainChanged);
-      window.ethereum?.removeListener("disconnect", handleDisconnect);
+window.ethereum?.removeListener("disconnect", handleDisconnect);
     };
   }, [invalidateWalletSession]);
-
   const refreshProfile = useCallback(async () => {
     try {
       const res = await fetch("/api/auth/me");
@@ -296,19 +281,18 @@ const EMPTY: AuthState = {
         setState((prev) => ({
           ...prev,
           username: data.username ?? prev.username,
-          displayName: data.displayName ?? data.username ?? prev.displayName,
+displayName: data.displayName ?? data.username ?? prev.displayName,
           avatarUrl: 'avatarUrl' in data ? data.avatarUrl : prev.avatarUrl,
           email: data.email ?? prev.email,
           birthday: 'birthday' in data ? data.birthday : prev.birthday,
           interests: data.interests ?? prev.interests,
           joinedCommunities: data.joinedCommunities ?? prev.joinedCommunities,
           onboardingCompleted: typeof data.onboardingCompleted === "boolean" ? data.onboardingCompleted : prev.onboardingCompleted,
-          onboardingStep: data.onboardingStep ?? prev.onboardingStep,
-          walletAddress: "walletAddress" in data ? sessionWalletAddress : prev.walletAddress,
+          onboardingStep: data.onboardingStep ?? prev.onboardingStep,          walletAddress: "walletAddress" in data ? sessionWalletAddress : prev.walletAddress,
           walletLinked: data.walletLinked ?? prev.walletLinked,
           googleLinked: data.googleLinked ?? prev.googleLinked,
           emailLinked: data.emailLinked ?? prev.emailLinked,
-  const linkEmail = useCallback(async (email: string, password: string) => {
+const linkEmail = useCallback(async (email: string, password: string) => {
     const res = await fetch("/api/auth/link-email", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -319,9 +303,7 @@ const EMPTY: AuthState = {
       throw new Error(data.error ?? "Failed to link email.");
     }
     await refreshProfile();
-  }, [refreshProfile]);
-
-  const loginWithGoogle = useCallback(async () => {
+  }, [refreshProfile]);  const loginWithGoogle = useCallback(async () => {
     await signIn("google", { callbackUrl: window.location.href });
   }, []);
 
@@ -344,21 +326,19 @@ const EMPTY: AuthState = {
         walletAddress: data.walletAddress ?? null,
         userId: data.userId ?? null,
         username: data.username ?? null,
-        displayName: data.displayName ?? data.username ?? null,
+displayName: data.displayName ?? data.username ?? null,
         avatarUrl: data.avatarUrl ?? null,
         email: data.email ?? null,
         birthday: data.birthday ?? null,
         interests: data.interests ?? [],
         joinedCommunities: data.joinedCommunities ?? [],
         onboardingCompleted: typeof data.onboardingCompleted === "boolean" ? data.onboardingCompleted : null,
-        onboardingStep: data.onboardingStep ?? 1,
-        karma: data.karma ?? 0,
+        onboardingStep: data.onboardingStep ?? 1,        karma: data.karma ?? 0,
         provider: data.provider ?? "email",
         walletLinked: data.walletLinked ?? false,
         googleLinked: data.googleLinked ?? false,
         emailLinked: data.emailLinked ?? true,
-    <AuthContext.Provider value={{ ...state, login, loginWithGoogle, loginWithEmail, linkEmail, linkWallet, linkGoogle, dismissWalletNotice, logout, refreshProfile }}>
-      {children}
+<AuthContext.Provider value={{ ...state, login, loginWithGoogle, loginWithEmail, linkEmail, linkWallet, linkGoogle, dismissWalletNotice, logout, refreshProfile }}>      {children}
     </AuthContext.Provider>
   );
 }

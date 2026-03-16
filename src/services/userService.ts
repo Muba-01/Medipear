@@ -10,26 +10,24 @@ function generateUsername(prefix: string): string {
 
 export async function findOrCreateUserByWallet(
   walletAddress: string
-): Promise<{ user: IUser; isNewUser: boolean }> {
-  await connectDB();
+): Promise<{ user: IUser; isNewUser: boolean }> {  await connectDB();
   const addr = walletAddress.toLowerCase();
 
   let user = await User.findOne({ walletAddress: addr });
-    isNewUser = true;
+isNewUser = true;
   }
   return { user, isNewUser };
 }
 
 export async function findOrCreateUserByGoogleAccount(
-  googleId: string,
-  email: string,
+  googleId: string,  email: string,
   name?: string,
   image?: string
 ): Promise<IUser> {
   await connectDB();
   const lowerEmail = email.toLowerCase();
 
-  const byGoogleId = await User.findOne({ googleId });
+const byGoogleId = await User.findOne({ googleId });
   if (byGoogleId) {
     return byGoogleId;
   }
@@ -55,13 +53,11 @@ export async function findOrCreateUserByGoogleAccount(
     username,
     avatarUrl: image ?? "",
     authProvider: "google",
-  });
-}
+  });}
 
 export async function linkGoogleToUser(
   userId: string,
-
-  const userObjectId = new mongoose.Types.ObjectId(userId);
+const userObjectId = new mongoose.Types.ObjectId(userId);
 
   // Make sure this Google account isn't already linked to a different user.
   const googleConflict = await User.findOne({
@@ -79,14 +75,11 @@ export async function linkGoogleToUser(
   });
   if (conflict) {
     throw new Error("Email already linked to another account");
-  }
-
-  return User.findByIdAndUpdate(
+  }  return User.findByIdAndUpdate(
     userId,
     {
       $set: {
-
-  if (!mongoose.Types.ObjectId.isValid(userId)) return null;
+if (!mongoose.Types.ObjectId.isValid(userId)) return null;
   const normalizedWalletAddress = walletAddress.toLowerCase();
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
@@ -100,8 +93,7 @@ export async function linkGoogleToUser(
 
   return User.findByIdAndUpdate(
     userId,
-    { walletAddress: normalizedWalletAddress },
-    { new: true }
+    { walletAddress: normalizedWalletAddress },    { new: true }
   );
 }
 

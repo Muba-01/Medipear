@@ -56,8 +56,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       rewardsOracle.onCommentCreated(user.walletAddress, comment.id, user._id.toString()).catch(console.error);
     }
     
-=======
-    return NextResponse.json({ comment }, { status: 201 });
+=======    return NextResponse.json({ comment }, { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to create comment";
     return NextResponse.json({ error: message }, { status: 400 });

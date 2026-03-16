@@ -24,8 +24,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       rewardsOracle.onCommunityJoined(user.walletAddress, slug, user._id.toString()).catch(console.error);
     }
     
-=======
-    return NextResponse.json(result);
+=======    return NextResponse.json(result);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to join community";
     return NextResponse.json({ error: message }, { status: 400 });

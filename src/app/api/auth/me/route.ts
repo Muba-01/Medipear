@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
         try {
           const dbUser = await getUserByWallet(payload.walletAddress);
           if (dbUser) {
-              displayName: dbUser.displayName ?? dbUser.username,
+displayName: dbUser.displayName ?? dbUser.username,
               avatarUrl: dbUser.avatarUrl,
               karma: dbUser.karma,
               bio: dbUser.bio ?? null,
@@ -37,8 +37,7 @@ export async function GET(req: NextRequest) {
               googleLinked,
               emailLinked,
               needsGoogleLink: !googleLinked,
-              needsWalletLink: false,
-            });
+              needsWalletLink: false,            });
           }
         } catch { /* fall through */ }
       }
@@ -55,14 +54,13 @@ export async function GET(req: NextRequest) {
   // 2. NextAuth session (Google OAuth)
   const session = await getServerSession(authOptions);
   if (session?.user?.id) {
-          const walletLinked = !!dbUser.walletAddress;
+const walletLinked = !!dbUser.walletAddress;
           const googleLinked = !!dbUser.googleId;
-          const emailLinked = !!dbUser.email;
-          return NextResponse.json({
+          const emailLinked = !!dbUser.email;          return NextResponse.json({
             walletAddress: dbUser.walletAddress ?? null,
             userId: dbUser._id.toString(),
             username: dbUser.username,
-            displayName: dbUser.displayName ?? dbUser.username,
+displayName: dbUser.displayName ?? dbUser.username,
             avatarUrl: dbUser.avatarUrl,
             karma: dbUser.karma,
             bio: dbUser.bio ?? null,
@@ -77,8 +75,7 @@ export async function GET(req: NextRequest) {
             googleLinked,
             emailLinked,
             needsGoogleLink: provider === "wallet" && !googleLinked,
-            needsWalletLink: provider === "google" && !walletLinked,
-          });
+            needsWalletLink: provider === "google" && !walletLinked,          });
         }
       } catch { /* fall through */ }
     }
@@ -86,12 +83,11 @@ export async function GET(req: NextRequest) {
       walletAddress: null,
       userId: session.user.id,
       username: session.user.name ?? null,
-      provider,
+provider,
       onboardingCompleted: false,
       onboardingStep: 1,
       needsGoogleLink: false,
-      needsWalletLink: provider === "google",
-    });
+      needsWalletLink: provider === "google",    });
   }
 
   return NextResponse.json({ walletAddress: null }, { status: 401 });

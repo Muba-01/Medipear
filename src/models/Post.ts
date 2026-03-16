@@ -18,7 +18,9 @@ export interface IPost extends Document {
   linkUrl?: string;
   commentCount: number;
   trustScore: number;
-  createdAt: Date;
+<<<<<<< HEAD
+  aiModerationStatus: AIStatus;
+=======  createdAt: Date;
   updatedAt: Date;
 }
 
@@ -40,6 +42,7 @@ const PostSchema = new Schema<IPost>(
 <<<<<<< HEAD
     aiModerationStatus: { type: String, enum: ["approved", "rejected", "pending"], default: "pending" },
 =======
+>>>>>>> 285550973379e98ffdd5e0ae52763a57b765120a
   },
   { timestamps: true }
 );

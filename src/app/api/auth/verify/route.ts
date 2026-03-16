@@ -8,7 +8,6 @@ import AuthNonce from "@/models/AuthNonce";
 const COOKIE_NAME = "mp_token";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const NONCE_COOKIE = "mp_nonce_id";
-
 export async function POST(req: NextRequest) {
   let body: { address?: string; signature?: string };
 
@@ -28,7 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
-  const nonceId = req.cookies.get(NONCE_COOKIE)?.value;
+const nonceId = req.cookies.get(NONCE_COOKIE)?.value;
   if (!nonceId) {
     return NextResponse.json({ error: "Nonce expired or not found. Please try again." }, { status: 401 });
   }
@@ -49,9 +48,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Nonce expired or not found. Please try again." }, { status: 401 });
   }
 
-  const nonce = nonceDoc.nonce;
-
-  const message = `Sign this message to authenticate with Medipear.\n\nNonce: ${nonce}`;
+  const nonce = nonceDoc.nonce;  const message = `Sign this message to authenticate with Medipear.\n\nNonce: ${nonce}`;
 
   let recoveredAddress: string;
   try {
@@ -64,13 +61,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Signature does not match address" }, { status: 401 });
   }
 
-  let isNewUser = false;
+let isNewUser = false;
   if (process.env.MONGODB_URI) {
     try {
       const result = await findOrCreateUserByWallet(address);
       dbUser = result.user;
-      isNewUser = result.isNewUser;
-    } catch {
+      isNewUser = result.isNewUser;    } catch {
       // Non-fatal: proceed without DB
     }
   }
@@ -92,8 +88,7 @@ export async function POST(req: NextRequest) {
     emailLinked: !!dbUser?.email,
     provider: "wallet",
     isNewUser,
-    needsGoogleLink: !dbUser?.googleId,
-  });
+    needsGoogleLink: !dbUser?.googleId,  });
 
   console.info("[wallet-auth] verify success", {
     providerWalletAddress: normalizedWalletAddress,

@@ -50,8 +50,7 @@ export async function POST(req: NextRequest) {
       rewardsOracle.onPostCreated(user.walletAddress, post.id, user._id.toString()).catch(console.error);
     }
     
-=======
-    return NextResponse.json({ post }, { status: 201 });
+=======    return NextResponse.json({ post }, { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to create post";
     return NextResponse.json({ error: message }, { status: 400 });

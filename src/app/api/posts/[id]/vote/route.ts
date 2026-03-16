@@ -57,8 +57,7 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
       }
     }
     
-=======
-    return NextResponse.json({ post: updated });
+=======    return NextResponse.json({ post: updated });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to vote on post";
     if (message.includes("own post")) {
